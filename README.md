@@ -5,9 +5,10 @@ five systems** — one step at a time.
 
 ### ▶ Live site: https://tairea.github.io/integral-data-start-here/
 
-Open the hub and pick a system; each links to a step-by-step walkthrough that follows a single real
-decision/flow through that system's modules, showing exactly which data objects are created and updated
-at every step — with the candidate JSON-Schema always one click away.
+This repo is the **source**. A GitHub Action builds the static site and deploys it to GitHub Pages on
+every push to `main` (commit → deploy). You don't commit the built site — CI assembles it.
+
+## The five walkthroughs
 
 | | System | What it does |
 |---|--------|--------------|
@@ -20,37 +21,41 @@ at every step — with the candidate JSON-Schema always one click away.
 All five follow one node — **Stillwater** — and one thread (a flooding footbridge), so you can see the
 systems hand data to each other in a closed cybernetic loop.
 
-> **⚠️ Status: a proposed candidate — not ratified.** Everything here (schemas, simulator, example
-> records) is Phase-1 candidate work offered to the contributor community to review, challenge, and
-> ratify. Nothing is adopted; the design questions are deliberately still open.
+> **⚠️ Status: a proposed candidate — not ratified.** Everything here is Phase-1 candidate work offered
+> to the contributor community to review, challenge, and ratify. Nothing is adopted.
 
-## What's in this repo
+## How it's built (commit → deploy)
 
 ```
-index.html                 the hub / landing page
-engine.css  engine.js      the shared engine that powers all five walkthroughs
-CDS-Start-Here/            the CDS walkthrough (self-contained — also the engine's source template)
-OAD/ITC/COS/FRS-Start-Here/  thin pages (data.js) over the shared engine
-integral-schema-exercise/   the candidate schemas, specs, open questions, and DR-001 the links point to
-simulator/                  a runnable simulator that pushes LLM-driven participant input through
-                            the real CDS contracts (Python; run locally — see simulator/README.md)
+CDS-Start-Here/index.html        the CDS walkthrough — self-contained, AND the engine's source template
+Integral-Data-Start-Here/
+  index.html                     the hub / landing page (source)
+  engine.css  engine.js          shared engine, generated from the CDS template by build.py
+  build.py                       extracts the engine from the CDS template + regenerates each thin page
+  assemble_site.py               assembles the deployable static site into _site/ (paths fixed for Pages)
+OAD/ITC/COS/FRS-Start-Here/      thin index.html + data.js (per-system content over the shared engine)
+integral-schema-exercise/        the candidate schemas/specs/open-questions the walkthroughs link to
+simulator/                       a runnable simulator (Python) — run locally; see simulator/README.md
+.github/workflows/deploy.yml     the build-and-deploy Action
 ```
 
-## Run locally
+**The pipeline** (`.github/workflows/deploy.yml`, on push to `main`):
+1. `python3 Integral-Data-Start-Here/build.py` — regenerate `engine.{css,js}` from the CDS template and
+   the four thin pages from their `data.js`.
+2. `python3 Integral-Data-Start-Here/assemble_site.py` — assemble `_site/` (hub at root, engine at root,
+   relative paths fixed for the Pages base URL; secrets excluded and scanned for).
+3. Upload `_site/` and deploy to GitHub Pages.
 
-It's static — just open `index.html` in a browser (or `python3 -m http.server` in this folder and
-visit `http://localhost:8000/`). The four engine-based pages load `../engine.js`; keep the folder
-structure intact.
+## To change the site
 
-## Editing
-
-The CDS page is the source-of-truth template; the shared engine and the other pages are built from it.
-See the build notes in the upstream working tree (`Integral-Data-Start-Here/build.py`,
-`assemble_site.py`). To change the look for all five: edit the CDS template and rebuild. To change one
-walkthrough's content: edit its `data.js`.
+- **One walkthrough's content:** edit that system's `*-Start-Here/data.js`, commit, push → it redeploys.
+- **Look / behaviour for all five:** edit the CDS template (`CDS-Start-Here/index.html`) or `build.py`,
+  commit, push → the engine rebuilds and all redeploy.
+- **Preview locally:** `python3 Integral-Data-Start-Here/build.py && python3 Integral-Data-Start-Here/assemble_site.py`
+  then open `_site/index.html` (or `python3 -m http.server` in `_site/`).
 
 ## Provenance
 
 Grounded in Integral's [Technical White Paper](https://github.com/Integral-Collective/integral-whitepaper),
 [Developer Guide](https://github.com/Integral-Collective/integral-devguide), and the author's walkthrough
-(Revolution Now! Ep. 59). Built as candidate work for the Integral collective.
+(Revolution Now! Ep. 59). Candidate work for the Integral collective.

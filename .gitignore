@@ -1,0 +1,11 @@
+# build output (the Action assembles this in CI and deploys it; never committed)
+_site/
+# caches / local artifacts
+__pycache__/
+*.pyc
+*.png
+# secrets — never commit
+.env
+simulator/.env
+# stochastic / local-only outputs
+simulator/out/*-live.*
