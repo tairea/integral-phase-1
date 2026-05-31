@@ -1,20 +1,26 @@
 #!/usr/bin/env python3
-"""Assemble the GitHub-Pages distribution for the Integral Data Start-Here site into ./dist-site/.
+"""Assemble the GitHub-Pages distribution for the Integral Data Start-Here site into ../_site/.
 
-Layout (repo root = GH Pages site root, hub is the landing page):
-  index.html            <- the hub (from Integral-Data-Start-Here/index.html), links de-../'d
-  engine.css engine.js  <- shared engine (from Integral-Data-Start-Here/)
-  CDS-Start-Here/       <- self-contained
-  OAD/ITC/COS/FRS-Start-Here/  <- thin index.html (engine path ../engine.js) + data.js
-  integral-schema-exercise/    <- copy (so GitHub blob links resolve + browsable)
-  simulator/            <- copy (source; SECRETS EXCLUDED)
-  .nojekyll README.md
+Source: everything start-here lives in this folder (integral-start-here/). The published site
+flattens it to the Pages root (so the live URLs stay /CDS-Start-Here/ etc., not nested):
+
+  _site/index.html            <- the hub (from integral-start-here/index.html) — the landing page
+  _site/engine.css engine.js  <- shared engine
+  _site/CDS-Start-Here/       <- self-contained
+  _site/OAD/ITC/COS/FRS-Start-Here/  <- thin index.html (engine path ../engine.js) + data.js
+  _site/integral-schema-exercise/    <- copy (so GitHub blob links resolve + browsable)
+  _site/simulator/            <- copy (source; SECRETS EXCLUDED)
+  _site/.nojekyll
+
+The hub links the modules as `CDS-Start-Here/...` and each module loads `../engine.js` — those
+relative paths are identical in the source folder and in the flattened site, so nothing is
+rewritten here; we just copy.
 """
 import os, re, shutil
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE = os.path.dirname(os.path.abspath(__file__))          # integral-start-here/
+ROOT = os.path.dirname(BASE)                               # repo root
 DIST = os.path.join(ROOT, "_site")
-HUB = os.path.join(ROOT, "Integral-Data-Start-Here")
 MODS = ["OAD-Start-Here", "ITC-Start-Here", "COS-Start-Here", "FRS-Start-Here"]
 
 EXCLUDE = {".git", "__pycache__", ".env", "_site", ".DS_Store"}
@@ -33,29 +39,22 @@ def main():
     os.makedirs(DIST)
     open(os.path.join(DIST, ".nojekyll"), "w").close()
 
-    # hub -> root index.html (strip the ../ on the five module-card links)
-    hub = open(os.path.join(HUB, "index.html"), encoding="utf-8").read()
-    hub = re.sub(r'href="\.\./((?:CDS|OAD|ITC|COS|FRS)-Start-Here/)', r'href="\1', hub)
-    open(os.path.join(DIST, "index.html"), "w", encoding="utf-8").write(hub)
+    # hub -> root index.html (landing); links are already `CDS-Start-Here/...` — copy as-is
+    shutil.copy2(os.path.join(BASE, "index.html"), os.path.join(DIST, "index.html"))
 
     # shared engine at root
     for f in ("engine.css", "engine.js"):
-        shutil.copy2(os.path.join(HUB, f), os.path.join(DIST, f))
+        shutil.copy2(os.path.join(BASE, f), os.path.join(DIST, f))
 
-    # CDS (self-contained) verbatim
-    os.makedirs(os.path.join(DIST, "CDS-Start-Here"))
-    shutil.copy2(os.path.join(ROOT, "CDS-Start-Here", "index.html"),
-                 os.path.join(DIST, "CDS-Start-Here", "index.html"))
-
-    # engine-based modules: data.js verbatim; index.html engine path -> ../engine.*
-    for d in MODS:
+    # the five walkthroughs (index.html + data.js where present) verbatim
+    for d in ["CDS-Start-Here"] + MODS:
         os.makedirs(os.path.join(DIST, d))
-        idx = open(os.path.join(ROOT, d, "index.html"), encoding="utf-8").read()
-        idx = idx.replace("../Integral-Data-Start-Here/engine.", "../engine.")
-        open(os.path.join(DIST, d, "index.html"), "w", encoding="utf-8").write(idx)
-        shutil.copy2(os.path.join(ROOT, d, "data.js"), os.path.join(DIST, d, "data.js"))
+        shutil.copy2(os.path.join(BASE, d, "index.html"), os.path.join(DIST, d, "index.html"))
+        dj = os.path.join(BASE, d, "data.js")
+        if os.path.exists(dj):
+            shutil.copy2(dj, os.path.join(DIST, d, "data.js"))
 
-    # reference projects (so blob links resolve + browsable)
+    # reference projects at repo root (so blob links resolve + browsable)
     shutil.copytree(os.path.join(ROOT, "integral-schema-exercise"),
                     os.path.join(DIST, "integral-schema-exercise"), ignore=ignore)
     shutil.copytree(os.path.join(ROOT, "simulator"),

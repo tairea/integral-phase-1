@@ -26,8 +26,8 @@ jobs:
           python-version: '3.x'
       - name: Build engine + assemble static site (-> _site/)
         run: |
-          python3 Integral-Data-Start-Here/build.py
-          python3 Integral-Data-Start-Here/assemble_site.py
+          python3 integral-start-here/build.py
+          python3 integral-start-here/assemble_site.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
