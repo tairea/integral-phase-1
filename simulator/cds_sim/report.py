@@ -1,6 +1,6 @@
 """Renders a pipeline trace into a single self-contained HTML file — the artifact the collective
 opens to watch the CDS data flow module by module."""
-import html, json
+import html, json, re
 
 GCOLOR = {"strong_support": "#1a7f37", "support": "#5a9e5a", "neutral": "#8a8a8a",
           "concern": "#d9822b", "block": "#b3261e"}
@@ -123,9 +123,10 @@ a{{color:var(--acc)}}
 .personas{{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 26px}}
 .persona{{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;flex:1 1 195px}}
 .persona b{{display:block}} .persona span{{color:var(--mut);font-size:12.5px}}
-.module{{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:0 0 16px}}
-.module:before{{content:attr(data-m);position:absolute;left:-11px;top:18px;background:var(--acc);color:#0a0c10;font-weight:800;font-size:12px;border-radius:7px;padding:3px 7px}}
-.module h3{{margin:0 0 2px;font-size:17px}} .module .s{{color:var(--mut);margin:0 0 14px;font-size:13.5px}}
+.module{{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:0 0 16px}}
+.mhead{{display:flex;align-items:center;gap:13px;margin:0 0 3px}}
+.mnum{{flex:none;background:var(--acc);color:#0a0c10;font-weight:800;font-size:11.5px;letter-spacing:.02em;border-radius:7px;padding:3px 10px;white-space:nowrap}}
+.module h3{{margin:0;font-size:17px}} .module .s{{color:var(--mut);margin:0 0 14px;font-size:13.5px}}
 .flow{{text-align:center;color:var(--line);font-size:20px;margin:-6px 0 10px}}
 table{{width:100%;border-collapse:collapse;font-size:13px}} th,td{{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}}
 th{{color:var(--mut);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}}
@@ -177,7 +178,10 @@ pre{{background:#08090d;border:1px solid var(--line);border-radius:8px;padding:1
     for t in p.trace:
         if t is not p.trace[0]:
             A(flow)
-        A(f'<div class="module" data-m="{e(t["module"])}"><h3>{e(t["title"])}</h3>'
+        mod = " · ".join(t["module"].split("·"))            # space the round suffix: "M5·r2" -> "M5 · r2"
+        blabel = ("CDS · " + mod) if re.match(r'^M\d', mod) else mod   # numbered CDS modules get the CDS prefix
+        A(f'<div class="module"><div class="mhead"><span class="mnum">{e(blabel)}</span>'
+          f'<h3>{e(t["title"])}</h3></div>'
           f'<p class="s">{e(t["summary"])}</p>')
         A(_render_body(t, P, p))
         A(_schema_panel(t, p.validations))

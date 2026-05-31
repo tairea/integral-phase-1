@@ -9,7 +9,7 @@ This repo is how you review it. It gives you three ways in:
 1. **[Interactive walkthroughs](https://tairea.github.io/integral-phase-1/)** — step through each
    system one decision at a time and watch exactly which data objects are created and updated.
 2. **[The candidate data structures](#the-candidate-data-structures)** — the actual JSON Schemas, below, categorised by system.
-3. **[A live simulator](#simulator)** — runs realistic participant input through the *real* contracts and validates every record against the schemas.
+3. **[A live CDS simulator](#cds-simulator)** — runs realistic participant input through the *real* CDS contracts and validates every record against the schemas.
 
 > **⚠️ Status: a proposed candidate — not ratified.** Nothing here is adopted. These are Phase-1
 > candidate contracts put forward for the contributor community to review. The
@@ -87,14 +87,18 @@ Everything lives in
 
 ---
 
-## Simulator
+## CDS Simulator
 
-[`simulator/`](https://github.com/tairea/integral-phase-1/tree/main/simulator) pushes **realistic,
-simulated participant input through the *actual* candidate CDS contracts** so the collective can watch
-the Collaborative Decision System work — module by module — and review it. It is **not a mock**: every
-`Issue`, `Submission`, `DecisionRecord`, and `DispatchPacket` it emits is **validated live against the
-schemas above**. If a deliberation can't pass through the contracts, the run fails — which is the point:
-*the simulator tests the data flow.*
+[`simulator/`](https://github.com/tairea/integral-phase-1/tree/main/simulator) is a **simulator of the
+CDS (Collaborative Decision System) only** — it pushes **realistic, simulated participant input through
+the *actual* candidate CDS contracts**, module by module (**M1 → M8**), so the collective can watch the
+Collaborative Decision System work and review it. It is **not a mock**: every `Issue`, `Submission`,
+`DecisionRecord`, and `DispatchPacket` it emits is **validated live against the four CDS schemas above**.
+If a deliberation can't pass through the contracts, the run fails — which is the point: *the simulator
+tests the data flow.*
+
+> **Scope:** only CDS is simulated. At the final step the decision is *dispatched* to OAD / COS / ITC /
+> FRS via a `DispatchPacket`, but those four systems are **not** run here — see their walkthroughs above.
 
 - **Two backends, identical output:** a deterministic **offline model** (no key, fully reproducible — reviewers can re-derive every vote) and a **live LLM** mode (OpenRouter / DeepSeek by default, or Anthropic) where personas genuinely reason.
 - **Five scenarios** to run it against: `footbridge`, `grain-mill`, `kitchen-hours`, `pump-failure`, `solar-rationing`.
