@@ -38,12 +38,12 @@ const STEPS = [
  <div class="callout"><b>You don't need to be a programmer.</b> We start in plain language. The technical detail is always optional (look for the "see the actual schema" toggles). By the end you'll understand the data structure behind the whole design commons — enough to review it and suggest improvements.</div>
  <div class="callout warn"><b>⚠️ Status: a proposed candidate — not ratified.</b> Everything described here — the schema, the example design record, the pipeline — is <b>Phase-1/2 candidate work</b> (${REF.dg51}), offered to the contributor community to <b>review, challenge, and ratify</b>. Nothing here is adopted. Of the OAD records you'll meet, only <b>one</b> (<code>CertifiedDesign</code>) has a machine-checkable contract so far; the rest are proposed shapes. Treat it as a starting point for deliberation, not a settled blueprint.
  <div class="prov" style="margin-top:10px"><b>Already familiar with the system?</b> Skip ahead to the candidate specs &amp; contracts (local repo):
- <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/specs/02-oad.md">OAD schema spec</a> ·
- <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/schemas/oad/certified-design.json">CertifiedDesign JSON Schema</a> ·
- <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/specs/00-canonical-enums.md">canonical enums</a> ·
- <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/specs/06-cross-contract-matrix.md">cross-contract matrix</a> ·
- <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/specs/07-open-questions.md">open questions (ratification register)</a> ·
- <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/README.md">schema exercise overview</a><br>
+ <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/02-oad.md">OAD schema spec</a> ·
+ <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/schemas/oad/certified-design.json">CertifiedDesign JSON Schema</a> ·
+ <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/00-canonical-enums.md">canonical enums</a> ·
+ <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/06-cross-contract-matrix.md">cross-contract matrix</a> ·
+ <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/07-open-questions.md">open questions (ratification register)</a> ·
+ <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/README.md">schema exercise overview</a><br>
  Source material (GitHub): ${lnk(GH_DG,"Developer Guide")} ·
  ${lnk("https://github.com/Integral-Collective/integral-whitepaper/tree/main/whitepaper","Technical White Paper")} ·
  ${REF.ep(0,"Revolution Now! Ep.59")}.</div></div>

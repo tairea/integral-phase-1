@@ -7,7 +7,7 @@
 const TAG = {WP:"t-wp", DG:"t-dg", DEFERRED:"t-def", FED:"t-fed"};
 function tag(t){return '<span class="tag '+(TAG[t]||"")+'">'+t+'</span>';}
 function lnk(u,t){return '<a href="'+u+'" target="_blank" rel="noopener">'+t+'</a>';}
-function LSPEC(p){return '<a href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/'+p+'" target="_blank" rel="noopener"><code>'+p+'</code></a>';}
+function LSPEC(p){return '<a href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/'+p+'" target="_blank" rel="noopener"><code>'+p+'</code></a>';}
 
 const SHELL = `
 <div class="app">

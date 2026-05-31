@@ -40,11 +40,11 @@ const STEPS = [
  <div class="callout"><b>You don't need to be a programmer.</b> We start in plain language. The technical detail is always optional (look for the "Actual object (JSON)" toggles). By the end you'll understand the data structure behind the production system — enough to review it and suggest improvements.</div>
  <div class="callout warn"><b>⚠️ Status: a proposed candidate — not ratified.</b> Everything described here — the schemas, the example records — is <b>Phase-1 candidate work</b> (${REF.dg51}), offered to the contributor community to <b>review, challenge, and ratify</b>. COS in particular is the <b>largest schema-coverage gap</b> in the whole project: the Developer Guide schematized only <b>2</b> of its records, while the white paper describes <b>43</b>. Treat this as a starting point for deliberation, not a settled blueprint.
  <div class="prov" style="margin-top:10px"><b>Already familiar with the system?</b> Skip ahead to the candidate specs &amp; contracts (local repo):
- <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/specs/04-cos.md">COS schema spec</a> ·
- <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/specs/00-canonical-enums.md">canonical enums</a> ·
- <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/specs/06-cross-contract-matrix.md">cross-contract matrix</a> ·
- <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/specs/07-open-questions.md">open questions (ratification register)</a> ·
- <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/README.md">schema exercise overview</a><br>
+ <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/04-cos.md">COS schema spec</a> ·
+ <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/00-canonical-enums.md">canonical enums</a> ·
+ <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/06-cross-contract-matrix.md">cross-contract matrix</a> ·
+ <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/07-open-questions.md">open questions (ratification register)</a> ·
+ <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/README.md">schema exercise overview</a><br>
  Source material (GitHub): ${lnk(GH_DG,"Developer Guide")} ·
  ${lnk("https://github.com/Integral-Collective/integral-whitepaper/tree/main/whitepaper","Technical White Paper")} ·
  ${REF.ep(0,"Revolution Now! Ep.59")}.</div></div>

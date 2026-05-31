@@ -38,12 +38,12 @@ const STEPS = [
  <div class="callout"><b>You don't need to be a programmer.</b> We start in plain language. The technical detail is always optional (look for the "see the actual schema" toggles). By the end you'll understand the data structure behind the whole system — enough to review it and suggest improvements.</div>
  <div class="callout warn"><b>⚠️ Status: a proposed candidate — not ratified.</b> Everything described here — the schemas, the simulator, the example decision records — is <b>Phase-1 candidate work</b> (${REF.dg51}), offered to the contributor community to <b>review, challenge, and ratify</b>. Nothing here is adopted, and the substantive design questions are deliberately still open (there are <b>17 open questions</b>; two of them gate Phase 2). Treat it as a starting point for deliberation, not a settled blueprint.
  <div class="prov" style="margin-top:10px"><b>Already familiar with the system?</b> Skip ahead to the candidate specs &amp; contracts (local repo):
- <a href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/specs/01-cds.md" target="_blank" rel="noopener">CDS schema spec</a> ·
- <a href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/specs/00-canonical-enums.md" target="_blank" rel="noopener">canonical enums</a> ·
- <a href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/specs/06-cross-contract-matrix.md" target="_blank" rel="noopener">cross-contract matrix</a> ·
- <a href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/specs/07-open-questions.md" target="_blank" rel="noopener">open questions (ratification register)</a> ·
- <a href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/decisions/DR-001-adopt-schema-baseline/DR-001.md" target="_blank" rel="noopener">candidate ratification record (DR-001)</a> ·
- <a href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/README.md" target="_blank" rel="noopener">schema exercise overview</a><br>
+ <a href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/01-cds.md" target="_blank" rel="noopener">CDS schema spec</a> ·
+ <a href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/00-canonical-enums.md" target="_blank" rel="noopener">canonical enums</a> ·
+ <a href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/06-cross-contract-matrix.md" target="_blank" rel="noopener">cross-contract matrix</a> ·
+ <a href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/07-open-questions.md" target="_blank" rel="noopener">open questions (ratification register)</a> ·
+ <a href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/decisions/DR-001-adopt-schema-baseline/DR-001.md" target="_blank" rel="noopener">candidate ratification record (DR-001)</a> ·
+ <a href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/README.md" target="_blank" rel="noopener">schema exercise overview</a><br>
  Source material (GitHub): ${lnk(GH_DG,"Developer Guide")} ·
  ${lnk("https://github.com/Integral-Collective/integral-whitepaper/tree/main/whitepaper","Technical White Paper")} ·
  ${REF.ep(0,"Revolution Now! Ep.59 (CDS walkthrough)")}.</div></div>
