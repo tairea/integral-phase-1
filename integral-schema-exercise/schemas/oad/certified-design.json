@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integral.candidate/schemas/oad/certified-design.json",
+  "title": "CertifiedDesign",
+  "description": "OAD Phase-2 record; consolidates 7 WP objects (DEVGUIDE §4.3). Authoritative source for COS production + ITC valuation. NOT RATIFIED.",
+  "type": "object",
+  "properties": {
+    "design_id": { "type": "string" },
+    "version": { "type": "string", "description": "semantic version e.g. 1.0.0" },
+    "label": { "type": "string" },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "authored_by": { "type": "array", "items": { "$ref": "../shared/enums.json#/$defs/ParticipantRef" } },
+    "created_at": { "type": "string", "format": "date-time" },
+    "certified_at": { "type": ["string", "null"], "format": "date-time" },
+    "certified_by": {
+      "type": "array",
+      "description": "MUST be a list — full certification panel audit trail (§4.3)",
+      "items": { "$ref": "../shared/enums.json#/$defs/ParticipantRef" }
+    },
+    "cds_mandate_ref": { "type": ["string", "null"], "description": "CDS DecisionRecord authorizing design work" },
+    "status": { "$ref": "../shared/enums.json#/$defs/DesignStatus" },
+    "bill_of_materials": { "type": "array", "items": { "$ref": "../shared/defs.json#/$defs/MaterialRequirement" } },
+    "production_steps": { "type": "array", "items": { "$ref": "../shared/defs.json#/$defs/LaborStep" } },
+    "skill_requirements": {
+      "type": "object",
+      "description": "hours_by_skill_tier",
+      "additionalProperties": { "type": "number" }
+    },
+    "ecological_flag": { "$ref": "../shared/enums.json#/$defs/EcologicalFlag" },
+    "ecological_notes": { "type": "string" },
+    "ecological_detail": { "type": ["object", "null"], "description": "[DEFERRED] structured EcoAssessment" },
+    "lifecycle_detail": { "type": ["object", "null"], "description": "[DEFERRED] LifecycleModel" },
+    "itc_access_cost": { "type": ["number", "null"] },
+    "itc_access_cost_method": { "enum": ["simple_embodied", null] },
+    "superseded_by": { "type": ["string", "null"] },
+    "design_lineage": { "type": ["string", "null"] },
+    "node_id": { "type": "string" },
+    "governance_scope": { "$ref": "../shared/enums.json#/$defs/GovernanceScope" },
+    "coop_id": { "type": ["string", "null"], "description": "owning co-op when governance_scope=coop (R1)" },
+    "promoted_from_scope": {
+      "oneOf": [{ "$ref": "../shared/enums.json#/$defs/GovernanceScope" }, { "type": "null" }],
+      "description": "prior level if promoted upward toward the commons (R1)"
+    },
+    "federation_hash": { "type": ["string", "null"], "description": "[FED][DEFERRED]" },
+    "commons_visible": { "type": "boolean" }
+  },
+  "required": ["design_id", "version", "title", "authored_by", "created_at", "status",
+    "bill_of_materials", "production_steps", "skill_requirements", "ecological_flag", "node_id",
+    "governance_scope"],
+  "additionalProperties": false
+}

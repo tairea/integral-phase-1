@@ -1,0 +1,38 @@
+{
+  "packet_id": "dev:DSP-001",
+  "decision_id": "dev:DR-001",
+  "issue_id": "dev:ISS-001",
+  "scenario_id": "dev:SCN-001",
+  "node_id": "dev",
+  "created_at": "2026-05-30T12:00:00Z",
+  "target_systems": [
+    "CDS"
+  ],
+  "oad_flags": null,
+  "tasks": [
+    {
+      "assignee": "specifications-wg",
+      "action": "open OQ ratification sessions OQ-01..OQ-16"
+    },
+    {
+      "assignee": "per-system-wgs",
+      "action": "review specs 01-05 + their relevant OQs"
+    },
+    {
+      "assignee": "joint-#specifications",
+      "action": "resolve cross-cutting OQ-01/04/07/08/16"
+    }
+  ],
+  "materials": null,
+  "schedule": null,
+  "itc_adjustments": null,
+  "frs_monitors": [
+    "Phase-2 gate: OQ-01 AND OQ-04 must close before Phase 2 begins"
+  ],
+  "acknowledgement_refs": null,
+  "metadata": {
+    "consensus_score": 0.8667,
+    "generated_at": "2026-05-30T12:00:00Z",
+    "note": "development-process decision; substantive schema ratification remains open"
+  }
+}

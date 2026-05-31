@@ -1,0 +1,60 @@
+{
+  "scenario_id": "footbridge",
+  "node_id": "stillwater",
+  "issue": {
+    "title": "The footbridge to the vertical farm floods during storms",
+    "description": "The timber footbridge over Mill Creek is the only pedestrian route to the vertical-farm co-op. In storm season it floods roughly monthly, cutting off the farm crew and stranding produce deliveries. The bridge is a 60-year-old structure of communal significance. The node must decide how to respond."
+  },
+  "context": {
+    "historical": "Bridge built 1966 by a community work-party; last reinforced 2009. Three flood closures already this season.",
+    "ecological": "Mill Creek is a salmon-bearing watershed; in-stream works are constrained. New composite materials carry high embodied carbon.",
+    "resources": "Reclaimed timber and a small steel stock are on hand; composite decking would be an external-dependency purchase.",
+    "labor": "Roughly 140 skilled labor-hours available in the next planning window across the relevant co-ops.",
+    "dependencies": "Vertical-farm co-op (food production) and the transport co-op (deliveries) both depend on this crossing.",
+    "evidence": ["flood-log-2026.csv", "bridge-inspection-2024.pdf", "watershed-constraint-map.png"]
+  },
+  "dimension_scope": {
+    "resilience": 0.6, "ecology": 0.7, "cost": 0.5, "heritage": 0.6, "equity": 0.8, "speed": 0.4
+  },
+  "proposals": [
+    {
+      "id": "P1", "origin": "submission",
+      "label": "Raise & reinforce the existing bridge in place",
+      "summary": "Lift the existing timber deck above the 50-year flood line and reinforce the trusses, keeping the original structure.",
+      "parameters": {"approach": "retrofit", "preserves_structure": true, "new_material": "reclaimed_timber+steel"},
+      "impacts": {"resilience": 0.8, "ecology": -0.1, "cost": -0.3, "heritage": 0.8, "equity": 0.6, "speed": -0.2}
+    },
+    {
+      "id": "P2", "origin": "submission",
+      "label": "Demolish and build a new elevated composite bridge",
+      "summary": "Remove the old timber bridge and build a tall composite-deck crossing engineered well above any flood.",
+      "parameters": {"approach": "new_build", "preserves_structure": false, "new_material": "composite_decking"},
+      "impacts": {"resilience": 0.9, "ecology": -0.6, "cost": -0.7, "heritage": -0.9, "equity": 0.5, "speed": -0.5}
+    },
+    {
+      "id": "P3", "origin": "auto_generated",
+      "label": "Abandon the bridge and reroute the path around the ridge",
+      "summary": "Stop maintaining the bridge; establish a longer all-weather path around via the ridge.",
+      "parameters": {"approach": "reroute", "preserves_structure": false, "new_material": "none"},
+      "impacts": {"resilience": 0.4, "ecology": 0.1, "cost": -0.2, "heritage": -0.3, "equity": -0.6, "speed": 0.2}
+    },
+    {
+      "id": "P4", "origin": "auto_generated",
+      "label": "Seasonal modular floating walkway",
+      "summary": "Bridge-step auto-generated option: deploy a demountable floating walkway only during storm season; store it otherwise.",
+      "parameters": {"approach": "seasonal_modular", "preserves_structure": true, "new_material": "modular_floats"},
+      "impacts": {"resilience": 0.5, "ecology": -0.1, "cost": -0.3, "heritage": 0.2, "equity": 0.2, "speed": 0.3}
+    }
+  ],
+  "constraints": [
+    {"name": "accessibility_floor", "kind": "constitutional", "dimension": "equity", "op": "min", "threshold": -0.4,
+     "message": "Access for elderly and disabled members must be preserved (node constitution)."},
+    {"name": "ecological_budget", "kind": "ecological", "dimension": "ecology", "op": "min", "threshold": -0.5,
+     "message": "Embodied-carbon / watershed impact exceeds the node's ecological budget."},
+    {"name": "labor_budget", "kind": "resource", "dimension": "cost", "op": "min", "threshold": -0.75,
+     "message": "Estimated labor+material burden exceeds the available planning-window budget."},
+    {"name": "heritage_review_required", "kind": "constitutional", "dimension": "heritage", "op": "min", "threshold": -0.7,
+     "soft": true,
+     "message": "Removing a structure older than 50 years requires a heritage review before it may proceed."}
+  ]
+}

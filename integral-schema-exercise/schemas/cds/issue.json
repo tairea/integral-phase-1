@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integral.candidate/schemas/cds/issue.json",
+  "title": "Issue",
+  "description": "CDS Module 1 governance question, root of the pipeline. NOT RATIFIED.",
+  "type": "object",
+  "properties": {
+    "issue_id": { "type": "string" },
+    "node_id": { "type": "string" },
+    "governance_scope": { "$ref": "../shared/enums.json#/$defs/GovernanceScope" },
+    "coop_id": { "type": ["string", "null"], "description": "owning co-op when governance_scope=coop (R1)" },
+    "escalated_from": { "type": ["string", "null"], "description": "lower-scope issue_id this was raised from (R1)" },
+    "title": { "type": "string" },
+    "description": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "last_updated_at": { "type": ["string", "null"], "format": "date-time" },
+    "status": { "$ref": "../shared/enums.json#/$defs/IssueStatus" },
+    "priority": { "enum": ["routine", "urgent", null] },
+    "tags": { "type": ["object", "null"], "description": "[DEFERRED] populated by Module 2 clustering" },
+    "submission_ids": { "type": "array", "items": { "type": "string" } },
+    "federation_hash": { "type": ["string", "null"], "description": "[FED][DEFERRED]" }
+  },
+  "required": ["issue_id", "node_id", "governance_scope", "title", "description", "created_at", "status"],
+  "additionalProperties": false
+}

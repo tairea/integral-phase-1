@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integral.candidate/schemas/shared/defs.json",
+  "title": "Integral Shared Sub-Objects (Candidate)",
+  "description": "Reusable sub-objects referenced across system schemas. NOT RATIFIED.",
+  "$defs": {
+    "MaterialRequirement": {
+      "type": "object",
+      "properties": {
+        "material_id": { "type": "string" },
+        "material_name": { "type": "string" },
+        "quantity": { "type": "number" },
+        "unit": { "type": "string" },
+        "eco_coefficients": {
+          "type": ["object", "null"],
+          "description": "[DEFERRED] per-material ecological coefficients (WP MaterialProfile)",
+          "properties": {
+            "embodied_energy_mj_per_kg": { "type": ["number", "null"] },
+            "carbon_kg_per_kg": { "type": ["number", "null"] },
+            "toxicity_index": { "type": ["number", "null"] },
+            "recyclability_index": { "type": ["number", "null"] },
+            "water_use_l_per_kg": { "type": ["number", "null"] },
+            "land_use_m2_per_kg": { "type": ["number", "null"] },
+            "scarcity_index": { "type": ["number", "null"] }
+          }
+        }
+      },
+      "required": ["material_id", "material_name", "quantity", "unit"]
+    },
+    "LaborStep": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "estimated_hours": { "type": "number" },
+        "skill_tier": { "$ref": "enums.json#/$defs/SkillTier" },
+        "tools_required": { "type": "array", "items": { "type": "string" } },
+        "sequence_index": { "type": "integer" },
+        "safety_notes": { "type": "string" },
+        "ergonomics_flags": {
+          "type": ["array", "null"],
+          "description": "[DEFERRED]",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["name", "estimated_hours", "skill_tier", "sequence_index"]
+    },
+    "SemanticTag": {
+      "type": "object",
+      "properties": {
+        "key": { "type": "string" },
+        "value": { "type": "string" },
+        "weight": { "type": "number", "default": 1.0 }
+      },
+      "required": ["key", "value"]
+    },
+    "Metric": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "value": { "type": "number" },
+        "unit": { "type": "string" },
+        "quality": { "type": "number", "minimum": 0, "maximum": 1, "default": 1.0 },
+        "metadata": { "type": "object" }
+      },
+      "required": ["name", "value", "unit"]
+    },
+    "DecayRuleParams": {
+      "type": "object",
+      "description": "Authoritative copy lives in CDS PolicyRecord; ITCAccount holds a read-through snapshot (OQ-04).",
+      "properties": {
+        "decay_half_life_days": { "type": "number" },
+        "decay_inactivity_grace_days": { "type": "number" },
+        "decay_min_balance_protected": { "type": "number" },
+        "decay_max_annual_fraction": { "type": "number" }
+      },
+      "required": ["decay_half_life_days", "decay_inactivity_grace_days"]
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integral.candidate/schemas/frs/diagnostic-finding.json",
+  "title": "DiagnosticFinding",
+  "description": "FRS Module 2 output (DEVGUIDE §4.3). White-paper canonical enums. NOT RATIFIED.",
+  "type": "object",
+  "properties": {
+    "finding_id": { "type": "string" },
+    "packet_ref": { "type": "string" },
+    "node_id": { "type": "string" },
+    "detected_at": { "type": "string", "format": "date-time" },
+    "finding_type": { "$ref": "../shared/enums.json#/$defs/FindingType" },
+    "severity": { "$ref": "../shared/enums.json#/$defs/Severity" },
+    "scope": { "$ref": "../shared/enums.json#/$defs/Scope" },
+    "persistence": { "$ref": "../shared/enums.json#/$defs/Persistence" },
+    "confidence": { "$ref": "../shared/enums.json#/$defs/Confidence" },
+    "summary": { "type": "string" },
+    "rationale": { "type": "string" },
+    "evidence_refs": { "type": "array", "items": { "type": "string" } },
+    "indicators": { "type": "object", "additionalProperties": { "type": "number" } },
+    "target_system": { "$ref": "../shared/enums.json#/$defs/TargetSystem" },
+    "requires_cds": { "type": "boolean" }
+  },
+  "required": ["finding_id", "packet_ref", "node_id", "detected_at", "finding_type",
+    "severity", "scope", "persistence", "confidence", "summary", "target_system", "requires_cds"],
+  "additionalProperties": false
+}

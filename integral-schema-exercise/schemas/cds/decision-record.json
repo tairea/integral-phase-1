@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integral.candidate/schemas/cds/decision-record.json",
+  "title": "DecisionRecord",
+  "description": "CDS Module 7 append-only governance output. Non-negotiable from day one (DEVGUIDE §3.1). NOT RATIFIED.",
+  "type": "object",
+  "properties": {
+    "decision_id": { "type": "string" },
+    "issue_id": { "type": "string" },
+    "scenario_id": { "type": "string" },
+    "node_id": { "type": "string" },
+    "governance_scope": { "$ref": "../shared/enums.json#/$defs/GovernanceScope" },
+    "coop_id": { "type": ["string", "null"], "description": "owning co-op when governance_scope=coop (R1)" },
+    "originating_node": { "type": ["string", "null"], "description": "[FED] cross-node provenance (OQ-06)" },
+    "status": { "$ref": "../shared/enums.json#/$defs/DecisionStatus" },
+    "consensus_score": { "type": "number", "minimum": 0, "maximum": 1 },
+    "objection_index": { "type": "number", "minimum": 0, "maximum": 1 },
+    "decided_at": { "type": "string", "format": "date-time" },
+    "decided_by": {
+      "type": "array",
+      "items": { "$ref": "../shared/enums.json#/$defs/ParticipantRef" }
+    },
+    "considered_scenario_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "full competing set the orchestrator chose from; winner is scenario_id (R6)"
+    },
+    "consensus_results": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "snapshot of each scenario's ConsensusResult, for audit / Module-10 review (R6)"
+    },
+    "escalation_reason": {
+      "oneOf": [{ "$ref": "../shared/enums.json#/$defs/EscalationReason" }, { "type": "null" }],
+      "description": "set if this decision passed through Module-9 escalation (R7)"
+    },
+    "rationale": { "type": "string" },
+    "rationale_hash": { "type": "string" },
+    "supersedes_decision_id": { "type": ["string", "null"] },
+    "review_triggers": {
+      "type": "array",
+      "description": "Module 10 trigger conditions, recorded from day one (§3.1)",
+      "items": { "$ref": "../shared/enums.json#/$defs/ReviewReason" }
+    },
+    "frs_monitor_keys": { "type": "array", "items": { "type": "string" } },
+    "prev_hash": { "type": ["string", "null"], "description": "[DEFERRED] cryptographic chaining" },
+    "entry_hash": { "type": ["string", "null"], "description": "[DEFERRED]" },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["decision_id", "issue_id", "scenario_id", "node_id", "governance_scope", "status",
+    "consensus_score", "objection_index", "decided_at", "rationale", "rationale_hash"],
+  "additionalProperties": false
+}

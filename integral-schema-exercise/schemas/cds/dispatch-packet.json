@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integral.candidate/schemas/cds/dispatch-packet.json",
+  "title": "DispatchPacket",
+  "description": "CDS Module 8 output. The primary contract between CDS and every other system (§3.1, §4.4). NOT RATIFIED.",
+  "type": "object",
+  "properties": {
+    "packet_id": { "type": "string" },
+    "decision_id": { "type": "string" },
+    "issue_id": { "type": "string" },
+    "scenario_id": { "type": "string" },
+    "node_id": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "target_systems": {
+      "type": "array",
+      "items": { "$ref": "../shared/enums.json#/$defs/SystemId" },
+      "description": "Uses SystemId (incl. FRS) not TargetSystem — CDS dispatches monitoring params to FRS (§2.3). Fix surfaced by the data-flow simulator."
+    },
+    "oad_flags": { "type": ["object", "null"], "description": "design mandates / standards / cert-policy for OAD" },
+    "tasks": { "type": ["array", "null"], "items": { "type": "object" }, "description": "production directives for COS" },
+    "materials": { "type": ["object", "null"], "description": "resource requirements for COS" },
+    "schedule": { "type": ["object", "null"], "description": "scheduling windows for COS" },
+    "itc_adjustments": { "type": ["object", "null"], "description": "weighting/decay/access policy for ITC" },
+    "frs_monitors": { "type": ["array", "null"], "items": { "type": "string" }, "description": "monitoring params + success metrics for FRS" },
+    "acknowledgement_refs": { "type": ["array", "null"], "items": { "type": "string" }, "description": "[DEFERRED]" },
+    "metadata": { "type": "object" }
+  },
+  "required": ["packet_id", "decision_id", "issue_id", "node_id", "created_at", "target_systems"],
+  "additionalProperties": false
+}

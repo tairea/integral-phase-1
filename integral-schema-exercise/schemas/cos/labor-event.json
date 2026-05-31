@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integral.candidate/schemas/cos/labor-event.json",
+  "title": "LaborEvent",
+  "description": "Owned by COS, consumed by ITC+FRS (DEVGUIDE §4.3). Preserves raw-capture vs weighting-output boundary (OQ-03). NOT RATIFIED.",
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "participant_id": { "$ref": "../shared/enums.json#/$defs/ParticipantRef" },
+    "coop_id": { "type": "string" },
+    "governance_scope": { "$ref": "../shared/enums.json#/$defs/GovernanceScope" },
+    "task_ref": { "type": "string" },
+    "production_plan_ref": { "type": ["string", "null"] },
+    "design_ref": { "type": ["string", "null"] },
+    "node_id": { "type": "string" },
+
+    "hours": { "type": "number", "exclusiveMinimum": 0, "description": "raw, value-neutral" },
+    "hours_verified": { "type": ["number", "null"] },
+    "skill_tier": { "$ref": "../shared/enums.json#/$defs/SkillTier" },
+    "context": { "type": "object", "description": "weighting signals — primary input to ITC Module 2 (do not omit)" },
+    "verification_status": { "enum": ["pending", "verified", "disputed"] },
+    "verified_by": { "type": "array", "items": { "$ref": "../shared/enums.json#/$defs/ParticipantRef" } },
+    "verified_at": { "type": ["string", "null"], "format": "date-time" },
+
+    "itc_weight_multiplier": { "type": ["number", "null"], "description": "ITC Module 2 output" },
+    "itc_weight_breakdown": { "type": ["object", "null"] },
+    "itc_weighted_hours": { "type": ["number", "null"] },
+    "itc_credits_issued": { "type": ["number", "null"] },
+
+    "ecological_flag": { "$ref": "../shared/enums.json#/$defs/EcologicalFlag" },
+    "ecological_detail": { "type": ["object", "null"], "description": "[DEFERRED]" },
+    "federation_hash": { "type": ["string", "null"], "description": "[FED][DEFERRED]" }
+  },
+  "required": ["event_id", "timestamp", "participant_id", "coop_id", "task_ref",
+    "node_id", "hours", "skill_tier", "context", "verification_status"],
+  "additionalProperties": false
+}

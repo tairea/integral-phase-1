@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integral.candidate/schemas/shared/enums.json",
+  "title": "Integral Canonical Enums (Candidate)",
+  "description": "Single source of truth for enumerated types. See specs/00-canonical-enums.md. NOT RATIFIED.",
+  "$defs": {
+    "SkillTier": { "enum": ["low", "medium", "high", "expert"] },
+    "EcologicalFlag": { "enum": ["low", "medium", "high"] },
+    "Scope": { "enum": ["local", "node", "regional", "federation"] },
+    "Severity": { "enum": ["info", "low", "moderate", "high", "critical"] },
+    "Confidence": { "enum": ["low", "medium", "high"] },
+    "AccessMode": { "enum": ["permanent_acquisition", "shared_use_lock", "service_use"] },
+
+    "SubmissionType": {
+      "enum": ["proposal", "objection", "evidence", "comment", "signal", "concern"],
+      "description": "White-paper canonical set is proposal|objection|evidence|comment|signal. `concern` (a problem report) is a candidate addition surfaced by the simulator — M1's core input is problem reports, which the WP enum lacked a type for. Reconcile via an open question."
+    },
+    "IssueStatus": {
+      "enum": ["intake", "structured", "context_ready", "constrained", "deliberation",
+        "consensus_check", "decided", "dispatched", "under_review", "reopened", "archived"]
+    },
+    "SupportLevel": {
+      "enum": ["strong_support", "support", "neutral", "concern", "block"],
+      "description": "Numeric mapping is policy (ConsensusPolicy.support_gradient_map), not fixed: strong_support=1.0, support=0.6, neutral=0.0, concern=-0.4, block=-1.0 (Ep.59 frame 65)."
+    },
+    "GovernanceScope": { "enum": ["coop", "node", "network"] },
+    "ScenarioOrigin": { "enum": ["submission", "auto_generated", "deliberation"] },
+    "EscalationReason": { "enum": ["revision_failure", "unresolved_value_conflict"] },
+    "ConsensusDirective": { "enum": ["approve", "revise", "escalate_to_module9"] },
+    "DecisionStatus": {
+      "enum": ["approved", "rejected", "revise_and_retry", "amended", "revoked", "reopened"]
+    },
+    "ReviewReason": {
+      "enum": ["frs_risk_signal", "cos_failure", "itc_equity_drift", "constraint_violation",
+        "new_evidence", "changed_conditions", "other"]
+    },
+    "ReviewOutcomeStatus": { "enum": ["reaffirmed", "amended", "revoked", "reopen_deliberation"] },
+
+    "DesignStatus": {
+      "enum": ["draft", "under_review", "optimized", "ready_for_certification", "certified", "deprecated"]
+    },
+    "CertificationStatus": { "enum": ["pending", "certified", "revoked"] },
+
+    "LedgerEntryType": {
+      "enum": ["labor_event_recorded", "labor_weight_applied", "itc_credited", "itc_decayed",
+        "access_value_quoted", "access_redeemed", "equivalence_band_applied",
+        "ethics_flag_created", "ethics_flag_resolved", "policy_updated"]
+    },
+    "EthicsStatus": { "enum": ["open", "under_review", "resolved"] },
+
+    "TaskStatus": { "enum": ["pending", "in_progress", "blocked", "done", "cancelled"] },
+    "BlockReason": { "enum": ["skill", "tool", "material", "space", "unknown"] },
+    "ConstraintType": { "enum": ["skill", "tool", "material", "space", "time"] },
+    "MaterialFlowSource": {
+      "enum": ["internal_recycle", "external_procurement", "production_use", "loss_scrap"]
+    },
+    "MaterialSourceCoarse": { "enum": ["internal", "external_dependency"] },
+    "AccessChannelType": {
+      "enum": ["personal_acquisition", "shared_fleet", "tool_library", "essential_service", "repair_pool"]
+    },
+    "QATestType": { "enum": ["functional", "safety", "durability", "maintainability", "eco_compliance"] },
+    "CoopScope": { "enum": ["internal", "federated", "external_transitional"] },
+    "COSEventType": { "enum": ["labor", "material", "workflow", "qa", "distribution", "coordination"] },
+
+    "SignalSource": { "enum": ["COS", "OAD", "ITC", "CDS", "ECO", "FED"] },
+    "SignalDomain": {
+      "enum": ["ecology", "materials", "energy", "labor", "throughput", "quality_reliability",
+        "distribution_access", "dependency_autonomy", "governance_participation",
+        "ethics_proto_market", "security_integrity", "other"]
+    },
+    "FindingType": {
+      "enum": ["ecological_overshoot_risk", "material_scarcity_trend",
+        "labor_imbalance_or_burnout_risk", "throughput_bottleneck_persistent",
+        "quality_reliability_drift", "dependency_fragility_increase", "access_inequity_detected",
+        "proto_market_or_coercion_risk", "governance_overload_or_capture_risk",
+        "data_integrity_anomaly", "other"]
+    },
+    "RecommendationType": {
+      "enum": ["design_review_request", "workflow_stress_alert", "valuation_drift_flag",
+        "training_priority_signal", "material_substitution_prompt", "dependency_risk_alert",
+        "policy_review_prompt", "monitoring_directive", "federated_learning_share", "other"]
+    },
+    "TargetSystem": {
+      "enum": ["CDS", "OAD", "COS", "ITC", "FED"],
+      "description": "FRS finding/recommendation routing target. Includes FED (federation), excludes FRS (no self-routing)."
+    },
+    "SystemId": {
+      "enum": ["CDS", "OAD", "COS", "ITC", "FRS"],
+      "description": "The five Integral systems. Used for CDS DispatchPacket.target_systems (CDS dispatches to any system, incl. FRS monitoring params per §2.3). Distinct from TargetSystem (OQ surfaced by the simulator: DispatchPacket could not target FRS under TargetSystem)."
+    },
+    "Persistence": { "enum": ["transient", "emerging", "persistent", "structural"] },
+    "RecommendationStatus": { "enum": ["pending", "acknowledged", "accepted", "rejected", "superseded"] },
+
+    "ParticipantRef": {
+      "type": "string",
+      "description": "Globally unique participant reference, MUST be 'node-id:participant-id' (DEVGUIDE §4.2).",
+      "pattern": "^[A-Za-z0-9_-]+:[A-Za-z0-9_-]+$"
+    }
+  }
+}

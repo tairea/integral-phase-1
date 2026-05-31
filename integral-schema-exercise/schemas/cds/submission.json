@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integral.candidate/schemas/cds/submission.json",
+  "title": "Submission",
+  "description": "A single input into a CDS Issue at M1 (a concern, proposal, objection, evidence, comment, or system signal). The raw records created before/at intake; near-duplicates are linked via duplicate_of, never discarded. Proposed candidate contract (CDS Module 1 shape from specs/01-cds.md) — NOT RATIFIED.",
+  "type": "object",
+  "properties": {
+    "submission_id": { "type": "string" },
+    "issue_id": { "type": "string" },
+    "node_id": { "type": "string" },
+    "author_id": {
+      "oneOf": [
+        { "$ref": "../shared/enums.json#/$defs/ParticipantRef" },
+        { "type": "null" }
+      ],
+      "description": "node-id:participant-id of the submitter; for type=signal this is the originating monitor (e.g. node:frs-monitor)"
+    },
+    "type": { "$ref": "../shared/enums.json#/$defs/SubmissionType" },
+    "content": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "source_system": {
+      "oneOf": [
+        { "$ref": "../shared/enums.json#/$defs/SystemId" },
+        { "type": "null" }
+      ],
+      "description": "set when type=signal: which system raised it (FRS/ITC/COS/OAD); null for human submissions"
+    },
+    "source_ref": { "type": ["string", "null"], "description": "ref to the originating record when type=signal" },
+    "embedding": {
+      "type": ["array", "null"],
+      "items": { "type": "number" },
+      "description": "[DEFERRED] vector of the submission's meaning, used for cosine-similarity de-duplication at M1"
+    },
+    "duplicate_of": {
+      "type": ["string", "null"],
+      "description": "if flagged a near-duplicate, the submission_id of the retained canonical entry (this one is kept and linked, not discarded)"
+    },
+    "metadata": { "type": ["object", "null"], "description": "[DEFERRED] normalization / intake metadata" }
+  },
+  "required": ["submission_id", "issue_id", "node_id", "author_id", "type", "content", "created_at"],
+  "additionalProperties": false
+}

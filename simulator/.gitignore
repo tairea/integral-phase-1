@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+out/*.json
+.env
+out/*-live.*
+out/ui-*.png

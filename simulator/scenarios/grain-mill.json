@@ -1,0 +1,51 @@
+{
+  "scenario_id": "grain-mill",
+  "node_id": "stillwater",
+  "issue": {
+    "title": "Convert the derelict grain mill into the node's shared fabrication hall",
+    "description": "The node's fabrication work has outgrown a cramped, damp workshop. The disused 1920s grain mill is the obvious large space to convert — but its interior and original milling machinery carry deep communal and historical meaning. The node must decide what to do."
+  },
+  "context": {
+    "historical": "The grain mill (1924) milled the valley's grain for three generations; several elders have family ties to it. Disused since 2011.",
+    "ecological": "Reusing the existing shell avoids the embodied carbon of a new build; a new shed would import steel and concrete.",
+    "resources": "The mill shell is structurally sound; conversion is mostly fit-out labor. A new shed needs purchased structural materials.",
+    "labor": "About 220 skilled labor-hours available across the building and fabrication co-ops this window.",
+    "dependencies": "Every production co-op depends on shared fabrication capacity; the bottleneck is slowing food, repair, and tooling work.",
+    "evidence": ["mill-structural-survey-2025.pdf", "workshop-utilisation-log.csv", "heritage-inventory.md"]
+  },
+  "dimension_scope": {"resilience": 0.6, "ecology": 0.7, "cost": 0.5, "heritage": 0.5, "equity": 0.8, "speed": 0.4},
+  "proposals": [
+    {"id": "A1", "origin": "submission",
+     "label": "Convert the grain mill into the fabrication hall",
+     "summary": "Strip and fit out the mill interior as a modern shared fabrication hall; remove the original milling machinery.",
+     "parameters": {"approach": "adaptive_reuse", "preserves_structure": false, "new_material": "minimal_fitout"},
+     "impacts": {"resilience": 0.7, "ecology": 0.5, "cost": -0.1, "heritage": -0.8, "equity": 0.6, "speed": 0.4}},
+    {"id": "A2", "origin": "submission",
+     "label": "Build a new fabrication shed elsewhere",
+     "summary": "Leave the mill untouched and build a new purpose-built shed on the cleared lot.",
+     "parameters": {"approach": "new_build", "preserves_structure": true, "new_material": "steel+concrete"},
+     "impacts": {"resilience": 0.5, "ecology": -0.3, "cost": -0.5, "heritage": 0.0, "equity": 0.4, "speed": 0.2}},
+    {"id": "A3", "origin": "auto_generated",
+     "label": "Incrementally expand the current workshop",
+     "summary": "Bridge-step option: patch and extend the existing cramped workshop instead of relocating.",
+     "parameters": {"approach": "incremental", "preserves_structure": true, "new_material": "reclaimed"},
+     "impacts": {"resilience": 0.3, "ecology": 0.0, "cost": -0.2, "heritage": 0.1, "equity": 0.2, "speed": 0.1}}
+  ],
+  "constraints": [
+    {"name": "ecological_budget", "kind": "ecological", "dimension": "ecology", "op": "min", "threshold": -0.5,
+     "message": "Embodied-carbon impact exceeds the node's ecological budget."},
+    {"name": "accessibility_floor", "kind": "constitutional", "dimension": "equity", "op": "min", "threshold": -0.4,
+     "message": "Shared fabrication access for all members must be preserved."},
+    {"name": "labor_budget", "kind": "resource", "dimension": "cost", "op": "min", "threshold": -0.75,
+     "message": "Labor + material burden exceeds the planning-window budget."},
+    {"name": "heritage_review_required", "kind": "constitutional", "dimension": "heritage", "op": "min", "threshold": -0.7,
+     "soft": true, "message": "Altering a structure older than 50 years requires a heritage review before it may proceed."}
+  ],
+  "intake": [
+    {"author": "stillwater:maya", "kind": "concern", "text": "The current workshop is cramped and damp; we keep losing tools and time."},
+    {"author": "stillwater:sam", "kind": "concern", "text": "The current workshop is cramped and damp; we keep losing tools and material."},
+    {"author": "stillwater:devon", "kind": "concern", "text": "Half our members can't even fit in the current workshop to use the shared tools."},
+    {"author": "stillwater:beatrice", "kind": "concern", "text": "The old grain mill is the heart of this place — my grandfather milled there. Please don't gut it."},
+    {"author": "stillwater:tomas", "kind": "proposal", "text": "If we must expand, reuse the mill shell — building new would import a mountain of embodied carbon."}
+  ]
+}

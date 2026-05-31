@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Integral · Data Start-Here</title>
+<style>
+:root{--bg:#0f1115;--panel:#171a21;--card:#1c2029;--ink:#e9ecf2;--mut:#9aa3b2;--line:#2a2f3a;
+ --acc:#6ea8fe;--good:#7ee2a8;--warn:#f0b070;--vc:#b79cff}
+*{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#39414f transparent}
+*::-webkit-scrollbar{width:11px;height:11px}*::-webkit-scrollbar-thumb{background:#333b48;border-radius:7px;border:3px solid var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.6 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto}
+a{color:var(--acc);text-decoration:none}
+.wrap{max-width:920px;margin:0 auto;padding:42px 22px 80px}
+h1{font-size:30px;margin:0 0 6px;letter-spacing:.01em}
+.tag{color:var(--mut);font-size:15px;margin:0 0 22px}
+code{background:#0b0d12;padding:1px 6px;border-radius:5px;font-size:.85em;color:#cdd6e6}
+.lead{font-size:17px;color:#dfe4ee;margin:0 0 16px}
+.callout{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:0 10px 10px 0;padding:13px 16px;margin:18px 0;font-size:14px}
+.callout.teal{border-left-color:var(--good)}
+.callout a{font-weight:600}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:26px 0}
+.cardlink{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;transition:border-color .15s,transform .15s}
+.cardlink:hover{border-color:var(--acc);transform:translateY(-2px)}
+.cardlink .top{display:flex;align-items:center;gap:11px;margin-bottom:6px}
+.cardlink .em{font-size:26px;line-height:1}
+.cardlink .nm{font-weight:800;font-size:16px}
+.cardlink .ab{color:var(--mut);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.cardlink p{margin:.3em 0 .6em;font-size:13.5px;color:#cdd4e0}
+.meta{font-size:11.5px;color:var(--mut);font-family:ui-monospace,Menlo,monospace}
+.meta b{color:var(--good);font-weight:600}
+.go{color:var(--acc);font-size:13px;font-weight:600;margin-top:8px;display:inline-block}
+.loop{background:#12151c;border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:24px 0;font-size:14px}
+.loop .flow{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#cdd6e6;line-height:2;word-spacing:2px}
+.loop .flow b{color:var(--acc)}
+h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:30px 0 10px}
+.foot{font-size:13px;color:var(--mut);line-height:1.9;border-top:1px solid var(--line);padding-top:16px;margin-top:30px}
+@media(max-width:680px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧭 Integral · Data Start-Here</h1>
+  <p class="tag">A guided tour of the data structures behind Integral's five systems — one step at a time.</p>
+
+  <p class="lead">Integral coordinates a community's production and decisions <b>without money and without bosses</b>.
+  It runs on five interlocking systems. Each of these explainers walks you through <b>one</b> system by following a
+  single real decision or flow, showing exactly which data objects are created and updated at every step — in plain
+  language, with the technical schema always one click away.</p>
+
+  <p>New here? <b>Start with the CDS</b> — it's the system that governs everything else. Then follow the loop.</p>
+
+  <div class="callout">
+    <b>⚠️ Status: a proposed candidate — not ratified.</b> Everything here (schemas, simulator, example records) is
+    <b>Phase-1 candidate work</b> offered to the contributor community to review, challenge, and ratify. Nothing is
+    adopted; the design questions are deliberately still open.
+    <div style="margin-top:8px;font-size:12.5px">For the technically-inclined: the candidate schemas live in
+    <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/specs/">specs/</a> ·
+    <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/specs/07-open-questions.md">open questions</a> ·
+    <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/blob/main/integral-schema-exercise/README.md">schema exercise overview</a>. Source:
+    <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">Developer Guide</a> ·
+    <a href="https://github.com/Integral-Collective/integral-whitepaper/tree/main/whitepaper" target="_blank" rel="noopener">White Paper</a>.</div>
+  </div>
+
+  <h2>The five systems</h2>
+  <div class="grid">
+    <a class="cardlink" href="CDS-Start-Here/index.html">
+      <div class="top"><span class="em">🐴</span><div><div class="nm">Collaborative Decision System</div><div class="ab">CDS · governance</div></div></div>
+      <p>How the community makes a binding decision — capture, deliberate, weigh consensus &amp; objections, record, dispatch.</p>
+      <div class="meta">primary object: <b>Issue</b> · 8 modules · scenario: the flooding footbridge</div>
+      <span class="go">Start the walkthrough →</span>
+    </a>
+    <a class="cardlink" href="OAD-Start-Here/index.html">
+      <div class="top"><span class="em">📐</span><div><div class="nm">Open Access Design</div><div class="ab">OAD · how things are made</div></div></div>
+      <p>How a design is openly created, ecologically assessed, decomposed into labor &amp; materials, and <b>certified</b> before anything is built.</p>
+      <div class="meta">primary object: <b>CertifiedDesign</b> · 8 modules · scenario: designing the bridge retrofit</div>
+      <span class="go">Start the walkthrough →</span>
+    </a>
+    <a class="cardlink" href="COS-Start-Here/index.html">
+      <div class="top"><span class="em">🛠️</span><div><div class="nm">Cooperative Organization System</div><div class="ab">COS · where work happens</div></div></div>
+      <p>How a certified design becomes organised production — work breakdown, labor, materials, quality, distribution.</p>
+      <div class="meta">primary object: <b>ProductionPlan</b> · 8 modules · scenario: building the retrofit</div>
+      <span class="go">Start the walkthrough →</span>
+    </a>
+    <a class="cardlink" href="ITC-Start-Here/index.html">
+      <div class="top"><span class="em">⏳</span><div><div class="nm">Integral Time Credits</div><div class="ab">ITC · contribution &amp; access</div></div></div>
+      <p>How contribution is recognised as <b>non-transferable, decaying</b> credits, and reconciled with access — reciprocity without a market.</p>
+      <div class="meta">primary object: <b>ITCLedgerEntry</b> · 8 modules · scenario: a week of mandated work</div>
+      <span class="go">Start the walkthrough →</span>
+    </a>
+    <a class="cardlink" href="FRS-Start-Here/index.html">
+      <div class="top"><span class="em">📡</span><div><div class="nm">Feedback &amp; Review System</div><div class="ab">FRS · the nervous system</div></div></div>
+      <p>How the system watches itself, detects drift early, models the future, and feeds signals back to governance — it flags, it never acts.</p>
+      <div class="meta">primary object: <b>Signal → Finding</b> · 7 modules · scenario: detecting the flood-closure trend</div>
+      <span class="go">Start the walkthrough →</span>
+    </a>
+    <div class="cardlink" style="border-style:dashed;cursor:default">
+      <div class="top"><span class="em">🔗</span><div><div class="nm">One node, one story</div><div class="ab">how they connect</div></div></div>
+      <p>All five explainers follow the same community — a node called <b>Stillwater</b> — and the same thread, so you can see how the systems hand data to each other.</p>
+      <div class="meta">read them in loop order, below ↓</div>
+    </div>
+  </div>
+
+  <div class="loop">
+    <h2 style="margin-top:0">The cybernetic loop (how the data flows between systems)</h2>
+    <div class="flow">
+      📡 <b>FRS</b> detects the rising flood-closure rate &nbsp;→&nbsp; raises a signal into<br>
+      🐴 <b>CDS</b>, where the community decides to raise the footbridge &nbsp;→&nbsp; dispatches a design mandate to<br>
+      📐 <b>OAD</b>, which certifies the retrofit design &nbsp;→&nbsp; hands the certified design to<br>
+      🛠️ <b>COS</b>, which organises the build and logs the labor &amp; materials &nbsp;→&nbsp; feeds that to<br>
+      ⏳ <b>ITC</b>, which credits the work and reconciles access &nbsp;→&nbsp; and back to<br>
+      📡 <b>FRS</b>, which watches whether it worked — closing the loop.
+    </div>
+  </div>
+
+  <div class="callout teal">
+    <b>Each explainer doubles as a schema-coverage map.</b> Green badges mark records with a machine-checkable
+    JSON-Schema contract the simulator validates against; amber marks proposed shapes not yet schematized — the
+    clearest places to contribute. Watch the data flow live in the
+    <a target="_blank" rel="noopener" href="https://github.com/tairea/integral-data-start-here/tree/main/simulator/">simulator</a>.
+  </div>
+
+  <div class="foot">
+    Part of the Integral candidate-work set: <code>CDS/OAD/ITC/COS/FRS-Start-Here</code> (these explainers) ·
+    <code>integral-schema-exercise</code> (the candidate schemas + open questions) ·
+    <code>simulator</code> (watch a real deliberation flow). Everything is candidate, for community deliberation.
+  </div>
+</div>
+</body>
+</html>

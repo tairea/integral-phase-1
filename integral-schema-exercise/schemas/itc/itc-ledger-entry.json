@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integral.candidate/schemas/itc/itc-ledger-entry.json",
+  "title": "ITCLedgerEntry",
+  "description": "ITC append-only ledger entry (DEVGUIDE §4.3). entry_type uses WP canonical enum. NOT RATIFIED.",
+  "type": "object",
+  "properties": {
+    "entry_id": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "participant_id": {
+      "oneOf": [{ "$ref": "../shared/enums.json#/$defs/ParticipantRef" }, { "type": "null" }],
+      "description": "null for system-wide entries"
+    },
+    "node_id": { "type": "string" },
+    "governance_scope": { "$ref": "../shared/enums.json#/$defs/GovernanceScope" },
+    "coop_id": { "type": ["string", "null"], "description": "the co-op when governance_scope=coop (R1)" },
+    "entry_type": { "$ref": "../shared/enums.json#/$defs/LedgerEntryType" },
+    "amount": { "type": "number", "description": "net credit change; for labor entries == weighted_credits" },
+    "raw_hours": { "type": ["number", "null"], "description": "labor entries only, else null" },
+    "weighted_credits": { "type": ["number", "null"], "description": "labor entries only, else null" },
+    "balance_after": { "type": "number" },
+    "related_ids": { "type": "object", "additionalProperties": { "type": "string" } },
+    "details": { "type": "object" },
+    "authorized_by": { "type": "string" },
+    "notes": { "type": "string" },
+    "prev_hash": { "type": ["string", "null"], "description": "[DEFERRED] hash chain" },
+    "entry_hash": { "type": ["string", "null"], "description": "[DEFERRED]" }
+  },
+  "required": ["entry_id", "timestamp", "node_id", "entry_type", "amount", "balance_after"],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "entry_type": { "enum": ["labor_event_recorded", "labor_weight_applied"] } } },
+      "then": {
+        "description": "labor entries must carry both raw_hours and weighted_credits for FRS drift audit (§4.3)",
+        "properties": {
+          "raw_hours": { "type": "number" },
+          "weighted_credits": { "type": "number" }
+        }
+      }
+    }
+  ]
+}

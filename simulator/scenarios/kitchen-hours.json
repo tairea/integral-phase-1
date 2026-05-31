@@ -1,0 +1,48 @@
+{
+  "scenario_id": "kitchen-hours",
+  "node_id": "stillwater",
+  "issue": {
+    "title": "Extend the community kitchen's operating hours",
+    "description": "The shared community kitchen currently runs 3 days a week and members are turned away. There is broad appetite to extend it — the open question is how, given the labor it takes to staff and clean a busier kitchen. This issue is expected to need a round of refinement."
+  },
+  "context": {
+    "historical": "Kitchen opened 2023; demand has roughly doubled; turn-aways logged every open day this quarter.",
+    "ecological": "Marginal ecological impact; mostly an energy + cleaning-water question, well within budget.",
+    "resources": "Equipment is sufficient; the binding resource is volunteer labor-hours for cooking and cleaning.",
+    "labor": "About 60 volunteer labor-hours/week are realistically sustainable without burning people out.",
+    "dependencies": "The kitchen underpins the node's shared-meals program and reduces individual cooking load.",
+    "evidence": ["kitchen-turnaway-log.csv", "volunteer-rota.md", "energy-water-usage.csv"]
+  },
+  "dimension_scope": {"resilience": 0.5, "ecology": 0.5, "cost": 0.6, "heritage": 0.4, "equity": 0.7, "speed": 0.5},
+  "proposals": [
+    {"id": "D1", "origin": "submission",
+     "label": "Open 7 days a week on a full volunteer rota",
+     "summary": "Run the kitchen every day, staffed by an expanded volunteer rota.",
+     "parameters": {"days_per_week": 7, "staffing": "volunteer_rota"},
+     "impacts": {"resilience": 0.5, "ecology": 0.2, "cost": -0.6, "heritage": 0.2, "equity": 0.8, "speed": 0.7}},
+    {"id": "D2", "origin": "submission",
+     "label": "Stay at 3 days but add a waitlist",
+     "summary": "Keep current hours; manage demand with a booking waitlist.",
+     "parameters": {"days_per_week": 3, "staffing": "current"},
+     "impacts": {"resilience": 0.1, "ecology": 0.1, "cost": 0.0, "heritage": 0.1, "equity": -0.2, "speed": -0.1}},
+    {"id": "D3", "origin": "auto_generated",
+     "label": "Hire two paid part-time cooks",
+     "summary": "Bridge-step option: extend hours by paying two part-time cooks instead of relying on volunteers.",
+     "parameters": {"days_per_week": 6, "staffing": "paid"},
+     "impacts": {"resilience": 0.6, "ecology": 0.1, "cost": -0.8, "heritage": 0.0, "equity": 0.5, "speed": 0.4}}
+  ],
+  "constraints": [
+    {"name": "labor_budget", "kind": "resource", "dimension": "cost", "op": "min", "threshold": -0.75,
+     "message": "Staffing burden exceeds the sustainable volunteer-hour budget."},
+    {"name": "accessibility_floor", "kind": "constitutional", "dimension": "equity", "op": "min", "threshold": -0.4,
+     "message": "Changes must not reduce equitable access to shared meals."}
+  ],
+  "frs_monitors": ["kitchen turn-away rate", "volunteer hours per week", "shared-meal participation"],
+  "intake": [
+    {"author": "stillwater:devon", "kind": "concern", "text": "We turn people away every open day — three days a week isn't enough for the demand."},
+    {"author": "stillwater:maya", "kind": "concern", "text": "We turn members away constantly; three days just doesn't meet the need anymore."},
+    {"author": "stillwater:sam", "kind": "concern", "text": "I'm all for more hours, but who staffs and cleans it? We can't burn out the volunteers."},
+    {"author": "stillwater:beatrice", "kind": "concern", "text": "The shared meals are what bind us — more access would be wonderful if it's sustainable."},
+    {"author": "stillwater:tomas", "kind": "concern", "text": "Energy and water for a busier kitchen are fine within budget; labor is the real question."}
+  ]
+}

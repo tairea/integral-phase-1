@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integral.candidate/schemas/cos/material-consumption-event.json",
+  "title": "MaterialConsumptionEvent",
+  "description": "Owned by COS, consumed by ITC+FRS (DEVGUIDE §4.3). NOT RATIFIED.",
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "task_ref": { "type": ["string", "null"] },
+    "production_plan_ref": { "type": ["string", "null"] },
+    "design_ref": { "type": ["string", "null"] },
+    "node_id": { "type": "string" },
+    "governance_scope": { "$ref": "../shared/enums.json#/$defs/GovernanceScope" },
+    "coop_id": { "type": ["string", "null"], "description": "the co-op when governance_scope=coop (R1)" },
+    "material_id": { "type": "string" },
+    "material_name": { "type": "string" },
+    "quantity_consumed": { "type": "number" },
+    "unit": { "type": "string" },
+    "quantity_remaining": { "type": ["number", "null"] },
+    "ecological_flag": { "$ref": "../shared/enums.json#/$defs/EcologicalFlag" },
+    "ecological_impact_index": { "type": ["number", "null"], "description": "[DEFERRED]" },
+    "source": { "$ref": "../shared/enums.json#/$defs/MaterialSourceCoarse" },
+    "flow_source": {
+      "oneOf": [{ "$ref": "../shared/enums.json#/$defs/MaterialFlowSource" }, { "type": "null" }],
+      "description": "richer WP 4-value source; coarse `source` derived from it (OQ-09)"
+    },
+    "external_source_ref": { "type": ["string", "null"], "description": "[DEFERRED]" },
+    "federation_hash": { "type": ["string", "null"], "description": "[FED][DEFERRED]" }
+  },
+  "required": ["event_id", "timestamp", "node_id", "material_id", "material_name",
+    "quantity_consumed", "unit", "ecological_flag", "source"],
+  "additionalProperties": false
+}

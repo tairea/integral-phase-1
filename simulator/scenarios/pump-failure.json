@@ -1,0 +1,46 @@
+{
+  "scenario_id": "pump-failure",
+  "node_id": "stillwater",
+  "issue": {
+    "title": "FRS alert: vertical-farm nutrient pumps are failing intermittently",
+    "description": "This issue did not start with a person — the Feedback & Review System raised it. FRS detected an intermittent failure pattern in the vertical farm's nutrient-pump system and submitted a signal to the CDS. Two solid remediations are on the table; the node must choose."
+  },
+  "context": {
+    "historical": "Pumps installed 2022; three pressure-loss events in the last 10 days, trend worsening (FRS signal).",
+    "ecological": "A new controller adds electronics/e-waste; repair-first reuses existing hardware.",
+    "resources": "Spare pump parts are in stock; a new automated controller is an external-dependency purchase.",
+    "labor": "About 90 skilled labor-hours available; either fix fits the window.",
+    "dependencies": "The vertical farm is the node's main fresh-food source; pump failure risks a whole grow cycle.",
+    "evidence": ["frs-signal-pump-pressure.json", "pump-maintenance-history.csv", "controller-spec-sheet.pdf"]
+  },
+  "dimension_scope": {"resilience": 0.6, "ecology": 0.6, "cost": 0.4, "heritage": 0.4, "equity": 0.7, "speed": 0.5},
+  "proposals": [
+    {"id": "C1", "origin": "submission",
+     "label": "Repair pumps and add redundancy",
+     "summary": "Repair the failing pumps and add a parallel backup line using in-stock parts.",
+     "parameters": {"approach": "repair_redundancy", "new_material": "in_stock_parts"},
+     "impacts": {"resilience": 0.7, "ecology": 0.1, "cost": -0.2, "heritage": 0.0, "equity": 0.4, "speed": 0.5}},
+    {"id": "C2", "origin": "submission",
+     "label": "Replace with a new automated controller",
+     "summary": "Swap the system for a new automated hydroponic controller with self-diagnostics.",
+     "parameters": {"approach": "new_controller", "new_material": "purchased_controller"},
+     "impacts": {"resilience": 0.8, "ecology": 0.0, "cost": -0.5, "heritage": 0.0, "equity": 0.5, "speed": 0.4}},
+    {"id": "C3", "origin": "auto_generated",
+     "label": "Monitor for now, no intervention",
+     "summary": "Bridge-step option: keep monitoring via FRS and intervene only if failures escalate.",
+     "parameters": {"approach": "monitor"},
+     "impacts": {"resilience": 0.0, "ecology": 0.1, "cost": 0.0, "heritage": 0.0, "equity": -0.1, "speed": -0.2}}
+  ],
+  "constraints": [
+    {"name": "ecological_budget", "kind": "ecological", "dimension": "ecology", "op": "min", "threshold": -0.5,
+     "message": "Embodied-carbon / e-waste impact exceeds the node's ecological budget."}
+  ],
+  "intake": [
+    {"author": "stillwater:frs-monitor", "kind": "signal", "source_system": "FRS",
+     "text": "FRS alert: nutrient-pump pressure dropped below threshold 3 times in 10 days; intermittent failure pattern, trend worsening."},
+    {"author": "stillwater:maya", "kind": "concern", "text": "The pumps keep cutting out mid-cycle and we lose a whole nutrient batch."},
+    {"author": "stillwater:devon", "kind": "concern", "text": "The pumps keep cutting out mid-cycle and crews lose a whole shift."},
+    {"author": "stillwater:sam", "kind": "concern", "text": "Whatever we choose, mind the cost — a full controller swap isn't cheap on parts."},
+    {"author": "stillwater:tomas", "kind": "concern", "text": "A new controller is more electronics to e-waste later; repair-first is greener if it'll hold."}
+  ]
+}

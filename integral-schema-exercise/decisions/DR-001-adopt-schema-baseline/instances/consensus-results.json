@@ -1,0 +1,42 @@
+[
+  {
+    "issue_id": "dev:ISS-001",
+    "scenario_id": "dev:SCN-001",
+    "node_id": "dev",
+    "consensus_score": 0.8667,
+    "objection_index": 0.09,
+    "directive": "approve",
+    "escalation_reason": null,
+    "required_conditions": [],
+    "synthesized_by": "dev:facilitator-01",
+    "created_at": "2026-05-30T12:00:00Z"
+  },
+  {
+    "issue_id": "dev:ISS-001",
+    "scenario_id": "dev:SCN-002",
+    "node_id": "dev",
+    "consensus_score": 0.6333,
+    "objection_index": 0.56,
+    "directive": "revise",
+    "escalation_reason": null,
+    "required_conditions": [
+      "Resolve blocking objection / raise consensus"
+    ],
+    "synthesized_by": "dev:facilitator-01",
+    "created_at": "2026-05-30T12:00:00Z"
+  },
+  {
+    "issue_id": "dev:ISS-001",
+    "scenario_id": "dev:SCN-003",
+    "node_id": "dev",
+    "consensus_score": -0.1,
+    "objection_index": 0.0,
+    "directive": "revise",
+    "escalation_reason": null,
+    "required_conditions": [
+      "Resolve blocking objection / raise consensus"
+    ],
+    "synthesized_by": "dev:facilitator-01",
+    "created_at": "2026-05-30T12:00:00Z"
+  }
+]

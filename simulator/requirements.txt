@@ -1,0 +1,6 @@
+# Live LLM participants (optional — offline mode runs without these)
+anthropic>=0.40
+
+# Schema validation against the candidate CDS contracts
+jsonschema>=4.20
+referencing>=0.30

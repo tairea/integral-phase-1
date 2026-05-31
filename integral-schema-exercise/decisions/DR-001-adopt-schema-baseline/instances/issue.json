@@ -1,0 +1,19 @@
+{
+  "issue_id": "dev:ISS-001",
+  "node_id": "dev",
+  "governance_scope": "node",
+  "coop_id": null,
+  "escalated_from": null,
+  "title": "Adopt the Phase-1 candidate schema set as working baseline and open ratification",
+  "description": "The Phase-1 schema design exercise (DEVGUIDE \u00a75.1) has produced a complete candidate schema for all five systems with 16 open questions. Decide whether to adopt it as the working baseline and open the OQs for community ratification, gating Phase 2 on the two blocking questions (OQ-01 notation, OQ-04 decay sync).",
+  "created_at": "2026-05-30T12:00:00Z",
+  "last_updated_at": "2026-05-30T12:00:00Z",
+  "status": "decided",
+  "priority": "routine",
+  "tags": null,
+  "submission_ids": [
+    "dev:SUB-001",
+    "dev:SUB-002"
+  ],
+  "federation_hash": null
+}

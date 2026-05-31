@@ -1,0 +1,79 @@
+{
+  "decision_id": "dev:DR-001",
+  "issue_id": "dev:ISS-001",
+  "scenario_id": "dev:SCN-001",
+  "node_id": "dev",
+  "governance_scope": "node",
+  "coop_id": null,
+  "originating_node": null,
+  "status": "approved",
+  "consensus_score": 0.8667,
+  "objection_index": 0.09,
+  "decided_at": "2026-05-30T12:00:00Z",
+  "decided_by": [
+    "dev:facilitator-01"
+  ],
+  "considered_scenario_ids": [
+    "dev:SCN-001",
+    "dev:SCN-002",
+    "dev:SCN-003"
+  ],
+  "consensus_results": [
+    {
+      "issue_id": "dev:ISS-001",
+      "scenario_id": "dev:SCN-001",
+      "node_id": "dev",
+      "consensus_score": 0.8667,
+      "objection_index": 0.09,
+      "directive": "approve",
+      "escalation_reason": null,
+      "required_conditions": [],
+      "synthesized_by": "dev:facilitator-01",
+      "created_at": "2026-05-30T12:00:00Z"
+    },
+    {
+      "issue_id": "dev:ISS-001",
+      "scenario_id": "dev:SCN-002",
+      "node_id": "dev",
+      "consensus_score": 0.6333,
+      "objection_index": 0.56,
+      "directive": "revise",
+      "escalation_reason": null,
+      "required_conditions": [
+        "Resolve blocking objection / raise consensus"
+      ],
+      "synthesized_by": "dev:facilitator-01",
+      "created_at": "2026-05-30T12:00:00Z"
+    },
+    {
+      "issue_id": "dev:ISS-001",
+      "scenario_id": "dev:SCN-003",
+      "node_id": "dev",
+      "consensus_score": -0.1,
+      "objection_index": 0.0,
+      "directive": "revise",
+      "escalation_reason": null,
+      "required_conditions": [
+        "Resolve blocking objection / raise consensus"
+      ],
+      "synthesized_by": "dev:facilitator-01",
+      "created_at": "2026-05-30T12:00:00Z"
+    }
+  ],
+  "escalation_reason": null,
+  "supersedes_decision_id": null,
+  "rationale": "Adopt candidate schema set v0.1 as the working baseline and open all 16 open questions for community ratification. Gate Phase 2 on OQ-01 (notation/source-of-truth) and OQ-04 (decay policy/snapshot sync). 'Ratify as final now' (SCN-002) was blocked by a high-severity objection: ratifying with OQ-01/OQ-04 open risks the unfixable schema-migration disruption \u00a74.1 describes. 'Defer entirely' (SCN-003) failed consensus. This decision is a development-process decision (\u00a76.3 provisional precursor to CDS); it adopts a review baseline, it does NOT finalize the schema.",
+  "rationale_hash": "sha256:37309cf5f47ed4c53eb27aa2b6fa28befc16729a7ed8d6789191d885be4fe7a3",
+  "review_triggers": [
+    "new_evidence",
+    "changed_conditions"
+  ],
+  "frs_monitor_keys": [
+    "oq-01-closed",
+    "oq-04-closed",
+    "phase2-gate"
+  ],
+  "prev_hash": "GENESIS",
+  "entry_hash": "sha256:0173ef94711237842685965faa6691aaec9980854dc5e49789a4f7dd123c1b6f",
+  "created_at": "2026-05-30T12:00:00Z"
+}

@@ -1,0 +1,47 @@
+{
+  "scenario_id": "solar-rationing",
+  "node_id": "stillwater",
+  "issue": {
+    "title": "Ration scarce stored solar capacity during the low-sun stretch",
+    "description": "A two-week overcast spell has left the node's battery bank unable to power everything. The cold-storage co-op (food preservation) and the fabrication workshop (production) both need more than the remaining capacity allows. The node must decide how to ration — and every split hurts someone."
+  },
+  "context": {
+    "historical": "Battery bank sized for normal insolation; this is the third deep-overcast event this year.",
+    "ecological": "No ecological cost to either split; this is purely an allocation question.",
+    "resources": "Remaining capacity covers roughly 60% of combined demand for the next two weeks.",
+    "labor": "Not labor-constrained; this is an energy-allocation decision.",
+    "dependencies": "Cold storage protects two weeks of harvested food; the workshop is mid-run on repair parts the whole node is waiting on.",
+    "evidence": ["battery-soc-log.csv", "demand-forecast-coldstore.csv", "workshop-run-schedule.md"]
+  },
+  "dimension_scope": {"resilience": 0.6, "ecology": 0.5, "cost": 0.5, "heritage": 0.4, "equity": 0.7, "speed": 0.5},
+  "proposals": [
+    {"id": "B1", "origin": "submission",
+     "label": "Prioritize cold-storage (protect the food)",
+     "summary": "Allocate most capacity to cold storage; the workshop run stalls for the duration.",
+     "parameters": {"priority": "cold_storage"},
+     "impacts": {"resilience": -0.6, "ecology": 0.1, "cost": -0.2, "heritage": 0.0, "equity": 0.7, "speed": -0.3}},
+    {"id": "B2", "origin": "submission",
+     "label": "Prioritize the workshop (finish the repair run)",
+     "summary": "Allocate most capacity to the workshop; cold storage runs warm and some food spoils.",
+     "parameters": {"priority": "workshop"},
+     "impacts": {"resilience": 0.7, "ecology": -0.1, "cost": 0.1, "heritage": 0.0, "equity": -0.6, "speed": 0.4}},
+    {"id": "B3", "origin": "auto_generated",
+     "label": "Even 50/50 split",
+     "summary": "Bridge-step option: split capacity evenly — both run degraded, neither fully served.",
+     "parameters": {"priority": "even"},
+     "impacts": {"resilience": 0.1, "ecology": 0.0, "cost": -0.1, "heritage": 0.0, "equity": 0.1, "speed": 0.0}}
+  ],
+  "constraints": [
+    {"name": "production_continuity", "kind": "resource", "dimension": "resilience", "op": "min", "threshold": -0.4,
+     "message": "Stalling the shared repair run below the continuity floor strands the whole node's pending work."},
+    {"name": "food_security_floor", "kind": "constitutional", "dimension": "equity", "op": "min", "threshold": -0.4,
+     "message": "Letting harvested food spoil breaches the node's food-security floor."}
+  ],
+  "intake": [
+    {"author": "stillwater:devon", "kind": "concern", "text": "If the food spoils, families go short — protecting cold storage has to come first."},
+    {"author": "stillwater:sam", "kind": "concern", "text": "If the workshop stalls, the whole node waits on the repair parts — that's everyone's problem."},
+    {"author": "stillwater:maya", "kind": "concern", "text": "We're mid-run; killing power to the workshop now wastes the work already done."},
+    {"author": "stillwater:tomas", "kind": "concern", "text": "Whatever we pick, it's only two weeks — let's not over-build the battery bank in a panic afterward."},
+    {"author": "stillwater:beatrice", "kind": "concern", "text": "Both matter. I don't want either group to feel sacrificed for the other."}
+  ]
+}

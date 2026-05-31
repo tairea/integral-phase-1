@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integral.candidate/schemas/frs/frs-signal-packet.json",
+  "title": "FRSSignalPacket",
+  "description": "FRS->CDS contract (DEVGUIDE §4.3). Closes the operational loop; cds_summary closes the governance-eval loop. NOT RATIFIED.",
+  "type": "object",
+  "properties": {
+    "packet_id": { "type": "string" },
+    "node_id": { "type": "string" },
+    "period_start": { "type": "string", "format": "date-time" },
+    "period_end": { "type": "string", "format": "date-time" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "generated_by": { "type": "string" },
+    "prev_packet_ref": { "type": ["string", "null"] },
+    "packet_hash": { "type": ["string", "null"], "description": "[DEFERRED] chaining" },
+    "envelopes": {
+      "type": "array",
+      "description": "raw SignalEnvelope bundle (restored from WP)",
+      "items": { "type": "object" }
+    },
+    "labor_summary": { "type": "object" },
+    "materials_summary": { "type": "object" },
+    "itc_summary": { "type": "object" },
+    "qa_summary": { "type": "object" },
+    "oad_summary": { "type": "object" },
+    "cds_summary": {
+      "type": "object",
+      "description": "closes the governance-evaluation loop (CDS->FRS), distinct from operational loop"
+    },
+    "findings": { "type": "array", "items": { "$ref": "diagnostic-finding.json" } },
+    "recommendations": { "type": "array", "items": { "$ref": "recommendation.json" } },
+    "cds_submission_ref": { "type": ["string", "null"], "description": "ref to CDS Issue created from this packet" }
+  },
+  "required": ["packet_id", "node_id", "period_start", "period_end", "generated_at", "generated_by"],
+  "additionalProperties": false
+}

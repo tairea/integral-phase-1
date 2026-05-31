@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integral.candidate/schemas/itc/itc-account.json",
+  "title": "ITCAccount",
+  "description": "ITC standing balance + decay snapshot (DEVGUIDE §4.3). Consumed by FRS. NOT RATIFIED.",
+  "type": "object",
+  "properties": {
+    "account_id": { "type": "string" },
+    "participant_id": { "$ref": "../shared/enums.json#/$defs/ParticipantRef" },
+    "node_id": { "type": "string" },
+    "balance": { "type": "number" },
+    "total_earned": { "type": "number" },
+    "total_redeemed": { "type": "number" },
+    "total_decayed": { "type": "number" },
+    "active_decay_rule_id": { "type": "string", "description": "ref to CDS-ratified DecayRule PolicyRecord" },
+    "last_decay_applied_at": { "type": ["string", "null"], "format": "date-time" },
+    "last_contribution_at": { "type": ["string", "null"], "format": "date-time" },
+    "last_access_at": { "type": ["string", "null"], "format": "date-time" },
+    "decay_snapshot": {
+      "allOf": [{ "$ref": "../shared/defs.json#/$defs/DecayRuleParams" }],
+      "description": "read-through cache of the active DecayRule; never written independently (OQ-04)"
+    },
+    "need_adjustment_active": { "type": "boolean", "default": false },
+    "need_adjustment_ref": { "type": ["string", "null"] },
+    "transferable": {
+      "const": false,
+      "description": "ALWAYS false — named architectural constraint, never a toggle (§4.3)"
+    },
+    "federation_scope": { "$ref": "../shared/enums.json#/$defs/Scope" },
+    "last_updated_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["account_id", "participant_id", "node_id", "balance", "total_earned",
+    "total_redeemed", "total_decayed", "active_decay_rule_id", "transferable"],
+  "additionalProperties": false
+}

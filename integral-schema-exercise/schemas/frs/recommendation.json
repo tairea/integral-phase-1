@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integral.candidate/schemas/frs/recommendation.json",
+  "title": "Recommendation",
+  "description": "FRS Module 4 advisory output (DEVGUIDE §4.3). Non-executive: FRS sets status=pending only (OQ-11). NOT RATIFIED.",
+  "type": "object",
+  "properties": {
+    "recommendation_id": { "type": "string" },
+    "finding_ref": { "type": "string" },
+    "constraint_model_ref": { "type": ["string", "null"], "description": "[DEFERRED] until FRS Module 3 ships" },
+    "node_id": { "type": "string" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "target_system": { "$ref": "../shared/enums.json#/$defs/TargetSystem" },
+    "recommendation_type": { "$ref": "../shared/enums.json#/$defs/RecommendationType" },
+    "severity": { "$ref": "../shared/enums.json#/$defs/Severity" },
+    "scope": { "$ref": "../shared/enums.json#/$defs/Scope" },
+    "confidence": { "$ref": "../shared/enums.json#/$defs/Confidence" },
+    "summary": { "type": "string" },
+    "rationale": { "type": "string" },
+    "payload": { "type": "object", "description": "target-system-specific structured detail" },
+    "status": { "$ref": "../shared/enums.json#/$defs/RecommendationStatus" },
+    "response_ref": { "type": ["string", "null"] }
+  },
+  "required": ["recommendation_id", "finding_ref", "node_id", "created_at",
+    "target_system", "recommendation_type", "severity", "scope", "confidence", "summary", "status"],
+  "additionalProperties": false
+}
