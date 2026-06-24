@@ -60,6 +60,13 @@ def main():
     shutil.copytree(os.path.join(ROOT, "simulator"),
                     os.path.join(DIST, "simulator"), ignore=ignore)
 
+    # Phase-1 plan: clean shareable route -> /phase-1-plan/  (self-contained HTML, no local assets)
+    plan_src = os.path.join(ROOT, "integral-schema-exercise", "PHASE-1-PLAN.html")
+    if os.path.exists(plan_src):
+        plan_dir = os.path.join(DIST, "phase-1-plan")
+        os.makedirs(plan_dir, exist_ok=True)
+        shutil.copy2(plan_src, os.path.join(plan_dir, "index.html"))
+
     # SAFETY: no secrets in the distribution
     bad = []
     for dp, _, names in os.walk(DIST):
