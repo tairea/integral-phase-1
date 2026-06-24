@@ -249,7 +249,7 @@
         <p>"The five systems of Integral are not independent applications that happen to share a network. They are deeply coupled components of a single architecture… If COS produces labor event records in a format that ITC cannot reliably consume, contribution accounting breaks. If ITC's credit records do not carry the fields that FRS needs to assess equity patterns, the feedback loop is blind to fairness drift.</p>
         <p>These are not bugs that can be fixed later with a patch. They are structural incompatibilities that require schema migrations, data backfilling, and potentially the invalidation of historical records — exactly the kind of disruption that destroys institutional memory and erodes contributor trust in a young project."</p>
       </blockquote>
-      <div class="cite">Dev Guide §4.1 — "Why Data Architecture Comes First" · <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">view on GitHub ↗</a></div>
+      <div class="cite">Dev Guide §4.1 — "Why Data Architecture Comes First" · <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#41-why-data-architecture-comes-first" target="_blank" rel="noopener">view on GitHub ↗</a></div>
     </details>
 
     <div style="margin-top:26px">
@@ -470,7 +470,7 @@
           <div class="row"><div class="k plain">In plain terms</div><div class="v">For a future network of many communities, add an optional field noting a decision's origin. It stays empty while we're a single community.</div></div>
           <div class="row"><div class="k why">Why it matters</div><div class="v">Cheap to add now, painful to retrofit into a permanent ledger later.</div></div>
           <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> add the optional origin field now, leave it null in single-community use. <br><span class="weigh">Worth weighing:</span> <span class="alt">is a single "origin node" enough, or will cross-community decisions later need richer provenance (who referenced or ratified it)?</span></div></div>
-          <div class="row"><div class="k src">Source</div><div class="v"><a class="srcl" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">Dev Guide §4.2 ↗</a>
+          <div class="row"><div class="k src">Source</div><div class="v"><a class="srcl" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#42-the-core-data-contracts-between-systems" target="_blank" rel="noopener">Dev Guide §4.2 ↗</a>
             <details class="dg"><summary>📖 Read the passage here <span class="plus">+</span></summary>
               <blockquote><p>"Every participant ID should be structured as <span class="mono">node-id:participant-id</span>… Every decision record should include the originating node… Building these fields in now — even though they will mostly be null in the early build — is the difference between a federation migration that takes days and one that takes months and corrupts historical records."</p></blockquote>
               <div class="cite">Dev Guide §4.1–§4.2 (federation fields)</div>
@@ -509,7 +509,7 @@
           <div class="row"><div class="k plain">In plain terms</div><div class="v">Credits fade over time so they can't pile up like money. That fade setting is stored in two places. We need a rule so the two can never disagree.</div></div>
           <div class="row"><div class="k why">Why it matters</div><div class="v">This protects the promise that credits don't accumulate — one of Integral's foundational principles. If the two copies drift, the math behind the whole credit system becomes untrustworthy.</div></div>
           <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> the account stores only the rule's <b>ID</b>; the inline numbers are a read-only copy refreshed automatically each time decay is applied, and never edited directly. <br><span class="weigh">Worth weighing:</span> <span class="alt">the master copy lives in governance (CDS) — we need to confirm the refresh timing so an account never decays using stale settings.</span></div></div>
-          <div class="row"><div class="k src">Source</div><div class="v"><a class="srcl" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">Dev Guide §4.2 — CDS→ITC Policy Signal ↗</a> · White Paper §1.3
+          <div class="row"><div class="k src">Source</div><div class="v"><a class="srcl" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#42-the-core-data-contracts-between-systems" target="_blank" rel="noopener">Dev Guide §4.2 — CDS→ITC Policy Signal ↗</a> · White Paper §1.3
             <details class="dg"><summary>📖 Read the passage here <span class="plus">+</span></summary>
               <blockquote><p>"<b>CDS → ITC: The Policy Signal</b> — The contract by which CDS governance decisions become the normative rules that ITC operates within. This includes labor weighting parameters, <b>decay rules</b>, fairness thresholds, access policy modifications, and anti-coercion boundaries. ITC does not set its own policy — CDS does."</p></blockquote>
               <div class="cite">Dev Guide §4.2</div>
@@ -522,7 +522,7 @@
           <div class="row"><div class="k plain">In plain terms</div><div class="v">When work is recorded there's the raw fact ("X did 3 hours") and the credited value derived from it. One record or two?</div></div>
           <div class="row"><div class="k why">Why it matters</div><div class="v">The raw record is meant to be value-neutral. If we ever re-credit work under a new fairness policy, we must not rewrite what actually happened.</div></div>
           <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> merge into one record, but <b>freeze the raw part</b> once written and version the credit part separately. Ratify the freeze rule now. <br><span class="weigh">Worth weighing:</span> <span class="alt">if a future policy re-weights old work, does versioning the credit block fully preserve the original — or do we ultimately need two separate records?</span></div></div>
-          <div class="row"><div class="k src">Source</div><div class="v"><a class="srcl" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">Dev Guide §4.3 ↗</a>
+          <div class="row"><div class="k src">Source</div><div class="v"><a class="srcl" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#43-fields-that-must-exist-from-day-one-even-if-empty" target="_blank" rel="noopener">Dev Guide §4.3 ↗</a>
             <details class="dg"><summary>📖 Read the passage here <span class="plus">+</span></summary>
               <blockquote><p>"The white paper separates raw labor capture (<span class="mono">LaborEvent</span>) from weighted contribution recognition (<span class="mono">WeightedLaborRecord</span>). This is architecturally significant: the labor event is value-neutral until weighting is applied… the boundary between raw capture and weighted output must be preserved in the field structure."</p></blockquote>
               <div class="cite">Dev Guide §4.3 — The Labor Event Record</div>
@@ -567,7 +567,7 @@
           <div class="row"><div class="k plain">In plain terms</div><div class="v">When a certified design hands a condensed "value signal" to the credit system, do we save a snapshot or recompute it every time it's read?</div></div>
           <div class="row"><div class="k why">Why it matters</div><div class="v">Stable, auditable credit values you can trace back — versus numbers that silently change underneath you.</div></div>
           <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> save a snapshot, stamped with the design version and policy that produced it. <br><span class="weigh">Worth weighing:</span> <span class="alt">computing on read is always fresh, but costs recompute and keeps no historical snapshot to audit against.</span></div></div>
-          <div class="row"><div class="k src">Source</div><div class="v"><a class="srcl" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">Dev Guide §4.2 — contract #2 ↗</a>
+          <div class="row"><div class="k src">Source</div><div class="v"><a class="srcl" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#42-the-core-data-contracts-between-systems" target="_blank" rel="noopener">Dev Guide §4.2 — contract #2 ↗</a>
             <details class="dg"><summary>📖 Read the passage here <span class="plus">+</span></summary>
               <blockquote><p>"<b>OAD → ITC: The Design Intelligence Signal</b> — The contract by which OAD certified designs become structured inputs to ITC valuation… When a design is updated or recertified, ITC must receive the updated intelligence to keep access valuations grounded in current design reality."</p></blockquote>
               <div class="cite">Dev Guide §4.2</div>
@@ -657,7 +657,7 @@
       </div>
       <details class="dg" style="margin-bottom:6px"><summary>📖 Why "from day one" — the Dev Guide on federation fields <span class="plus">+</span></summary>
         <blockquote><p>"The system is designed to eventually operate across multiple independent nodes. Every participant ID should be structured as <span class="mono">node-id:participant-id</span>… Building these fields in now — even though they will mostly be null in the early build — is the difference between a federation migration that takes days and one that takes months and corrupts historical records."</p></blockquote>
-        <div class="cite">Dev Guide §4.1 · <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">view on GitHub ↗</a></div>
+        <div class="cite">Dev Guide §4.1 · <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#41-why-data-architecture-comes-first" target="_blank" rel="noopener">view on GitHub ↗</a></div>
       </details>
       <p class="also"><b>Reviews:</b> OPEN-QUESTION-06 and OPEN-QUESTION-13 (with CDS) and OPEN-QUESTION-16 (with FRS) — the questions that decide how communities and co-ops connect.</p>
     </div>
