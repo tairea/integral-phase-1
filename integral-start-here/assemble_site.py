@@ -60,6 +60,19 @@ def main():
     shutil.copytree(os.path.join(ROOT, "simulator"),
                     os.path.join(DIST, "simulator"), ignore=ignore)
 
+    # HTML communication artifacts + the ValueFlows deep-research note (browsable; blob links resolve)
+    for d in ("html-artifacts", "valueflow-integral"):
+        src = os.path.join(ROOT, d)
+        if os.path.exists(src):
+            shutil.copytree(src, os.path.join(DIST, d), ignore=ignore)
+
+    # ValueFlows proposal: clean shareable route -> /valueflows/  (self-contained HTML, no local assets)
+    vf_src = os.path.join(ROOT, "html-artifacts", "valueflows-integral-proposal.html")
+    if os.path.exists(vf_src):
+        vf_dir = os.path.join(DIST, "valueflows")
+        os.makedirs(vf_dir, exist_ok=True)
+        shutil.copy2(vf_src, os.path.join(vf_dir, "index.html"))
+
     # Phase-1 plan: clean shareable route -> /phase-1-plan/  (self-contained HTML, no local assets)
     plan_src = os.path.join(ROOT, "integral-schema-exercise", "PHASE-1-PLAN.html")
     if os.path.exists(plan_src):

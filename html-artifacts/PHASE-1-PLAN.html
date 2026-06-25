@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Integral — Phase 1: Why We Lock the Schema First</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,900&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a0e0c; --ink-2:#101510; --panel:#141b17; --panel-2:#1a231e;
+    --cream:#f3eee1; --muted:#9aa39b; --faint:#5f6b62;
+    --amber:#f2b134; --amber-2:#ffd277; --cyan:#5cd6c6; --red:#ff6f6f;
+    --line:rgba(243,238,225,0.10); --line-2:rgba(243,238,225,0.06); --r:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--ink);color:var(--cream);font-family:'Archivo',sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden;position:relative}
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:linear-gradient(rgba(92,214,198,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(92,214,198,0.035) 1px,transparent 1px);
+    background-size:46px 46px;mask-image:radial-gradient(ellipse 120% 80% at 50% 0%,#000 30%,transparent 90%)}
+  body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 28px}
+  .narrow{max-width:760px}
+  .mono{font-family:'JetBrains Mono',monospace}
+
+  /* HERO */
+  header{padding:92px 0 50px;position:relative}
+  .glow{position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:680px;height:420px;background:radial-gradient(circle,rgba(242,177,52,0.16),transparent 62%);filter:blur(20px);z-index:-1}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.32em;text-transform:uppercase;color:var(--amber);display:flex;align-items:center;gap:14px;margin-bottom:26px;opacity:0;animation:rise .8s .05s forwards}
+  .eyebrow::before{content:"";width:34px;height:1px;background:var(--amber)}
+  h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(2.6rem,6.5vw,4.9rem);line-height:1.0;letter-spacing:-0.02em;opacity:0;animation:rise .8s .12s forwards}
+  h1 .it{font-style:italic;font-weight:400;color:var(--amber-2)}
+  .sub{font-size:clamp(1.08rem,1.6vw,1.34rem);color:var(--muted);max-width:660px;margin-top:24px;opacity:0;animation:rise .8s .22s forwards}
+  .sub b{color:var(--cream);font-weight:600}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px;opacity:0;animation:rise .8s .3s forwards}
+  .chip{font-family:'JetBrains Mono',monospace;font-size:12px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:rgba(255,255,255,0.015)}
+  .chip b{color:var(--cream)}
+  .chip.red{border-color:rgba(255,111,111,0.4);color:var(--red)}
+
+  /* SECTIONS */
+  section{padding:58px 0;border-top:1px solid var(--line-2)}
+  .sec-tag{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.2em;color:var(--faint);text-transform:uppercase;margin-bottom:14px}
+  h2{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.7rem,3.4vw,2.5rem);letter-spacing:-0.015em;margin-bottom:14px;line-height:1.1}
+  h2 .accent{color:var(--amber)}
+  .lead{color:var(--muted);font-size:1.08rem;max-width:720px}
+  .lead b{color:var(--cream);font-weight:600}
+
+  /* PROSE / WHY */
+  .prose p{font-size:1.1rem;color:#d7d3c6;margin-bottom:20px;max-width:720px}
+  .prose p b{color:var(--cream)}
+  .pull{border-left:3px solid var(--amber);padding:8px 0 8px 24px;margin:30px 0;font-family:'Fraunces',serif;font-style:italic;font-size:1.45rem;line-height:1.4;color:var(--amber-2);max-width:720px}
+  .pull cite{display:block;font-family:'JetBrains Mono',monospace;font-style:normal;font-size:.8rem;letter-spacing:.08em;color:var(--faint);margin-top:14px;text-transform:uppercase}
+
+  /* SOURCE LINK CALLOUT */
+  .source-cta{display:inline-flex;align-items:center;gap:12px;margin-top:8px;padding:14px 20px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(160deg,var(--panel),var(--ink-2));text-decoration:none;color:var(--cream);font-weight:600;transition:border-color .3s,transform .3s}
+  .source-cta:hover{border-color:rgba(242,177,52,0.5);transform:translateY(-2px)}
+  .source-cta .gh{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--amber);letter-spacing:.06em}
+  .source-cta .arr{color:var(--amber);font-size:1.1rem}
+  .source-cta small{display:block;font-weight:400;color:var(--muted);font-size:.82rem}
+
+  /* CONSEQUENCE CARDS */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:30px}
+  .ccard{border:1px solid var(--line);border-radius:var(--r);padding:24px;background:linear-gradient(160deg,var(--panel),var(--ink-2))}
+  .ccard h3{font-family:'Archivo';font-weight:700;font-size:1.02rem;margin-bottom:10px;display:flex;align-items:center;gap:9px}
+  .ccard.good h3{color:var(--cyan)} .ccard.bad h3{color:var(--red)}
+  .ccard p{color:var(--muted);font-size:.95rem}
+  .ic{width:22px;height:22px;flex-shrink:0}
+
+  /* INLINE DEV GUIDE EXPANSION — readable sans, terminal-panel styling */
+  details.dg{margin-top:12px;border:1px solid var(--line-2);border-left:3px solid rgba(242,177,52,.45);border-radius:0 8px 8px 0;background:rgba(242,177,52,0.03);overflow:hidden}
+  details.dg summary{list-style:none;cursor:pointer;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.04em;color:var(--amber-2);display:flex;align-items:center;gap:8px}
+  details.dg summary::-webkit-details-marker{display:none}
+  details.dg summary .plus{margin-left:auto;transition:transform .3s}
+  details.dg[open] summary .plus{transform:rotate(45deg)}
+  details.dg blockquote{padding:4px 18px 16px 18px;font-family:'Archivo',sans-serif;font-size:.97rem;line-height:1.68;color:#d7d3c6;font-style:normal}
+  details.dg blockquote p{margin-bottom:12px}
+  details.dg blockquote b{color:var(--cream);font-weight:600}
+  details.dg .cite{padding:0 18px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  details.dg .cite a{color:var(--amber);text-decoration:none;border-bottom:1px solid rgba(242,177,52,.3)}
+
+  /* TRANSPARENCY / SEE FOR YOURSELF */
+  .qa{border:1px solid rgba(92,214,198,0.25);border-radius:var(--r);padding:26px 28px;background:linear-gradient(160deg,rgba(92,214,198,0.05),var(--ink-2));margin-bottom:30px}
+  .qa .q{font-family:'Fraunces',serif;font-size:1.3rem;color:var(--cyan);margin-bottom:10px;font-weight:500}
+  .qa p{color:#d7d3c6;font-size:1.02rem;margin-bottom:12px}
+  .qa p:last-child{margin-bottom:0}
+  .qa b{color:var(--cream)}
+  .links-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:8px}
+  .link-card{display:flex;flex-direction:column;gap:6px;text-decoration:none;border:1px solid var(--line);border-radius:12px;padding:18px 20px;background:linear-gradient(160deg,var(--panel),var(--ink-2));transition:border-color .3s,transform .3s}
+  .link-card:hover{border-color:rgba(242,177,52,0.5);transform:translateY(-3px)}
+  .link-card .lc-top{display:flex;align-items:center;gap:10px}
+  .link-card .lc-ic{font-size:1.2rem}
+  .link-card .lc-title{font-weight:700;color:var(--cream);font-size:1.02rem}
+  .link-card .lc-arr{margin-left:auto;color:var(--amber)}
+  .link-card .lc-desc{color:var(--muted);font-size:.9rem}
+
+  /* PIPELINE */
+  .diagram{margin-top:6px;background:linear-gradient(160deg,var(--panel),var(--ink-2));border:1px solid var(--line);border-radius:18px;padding:28px 22px;overflow-x:auto}
+  .diagram svg{display:block;min-width:820px;margin:0 auto}
+  .legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted)}
+  .legend span{display:flex;align-items:center;gap:8px}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+  /* WORKSTREAMS */
+  .ws{position:relative;background:linear-gradient(165deg,var(--panel),var(--ink-2));border:1px solid var(--line);border-radius:var(--r);padding:26px 28px 22px 30px;margin-bottom:18px;transition:border-color .35s}
+  .ws::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px;background:var(--amber)}
+  .ws.cross::before{background:var(--cyan)} .ws.blocker::before{background:var(--red)}
+  .ws-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+  .ws-id{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.78rem;letter-spacing:.08em;color:var(--amber)}
+  .ws.cross .ws-id{color:var(--cyan)} .ws.blocker .ws-id{color:var(--red)}
+  .sev{font-family:'JetBrains Mono',monospace;font-size:10.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .sev.crit{border-color:rgba(255,111,111,0.5);color:var(--red);background:rgba(255,111,111,0.07)}
+  .sev.x{border-color:rgba(92,214,198,0.4);color:var(--cyan)}
+  .ws h3{font-family:'Fraunces',serif;font-weight:600;font-size:1.42rem;letter-spacing:-0.01em;margin-bottom:10px}
+  .ws .deliver{color:#d7d3c6;font-size:1rem;margin-bottom:16px;max-width:640px}
+  .ws .deliver b{color:var(--cream);font-weight:600}
+
+  /* WALKTHROUGH CALLOUT */
+  .walk{display:inline-flex;align-items:center;gap:13px;text-decoration:none;border:1px solid rgba(92,214,198,0.3);border-radius:11px;padding:12px 18px;background:rgba(92,214,198,0.05);margin-bottom:18px;transition:border-color .3s,transform .3s}
+  .walk:hover{border-color:var(--cyan);transform:translateY(-2px)}
+  .walk .walk-ic{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:rgba(92,214,198,0.15);color:var(--cyan);font-size:.8rem;flex-shrink:0}
+  .walk .wt{font-weight:600;color:var(--cream);font-size:.96rem}
+  .walk small{display:block;font-weight:400;color:var(--muted);font-size:.82rem}
+  .walk .arr{color:var(--cyan);margin-left:4px}
+
+  /* TEAM ROW + TOOLTIPS */
+  .team-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;padding:12px 14px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid var(--line-2)}
+  .pill{display:flex;align-items:center;gap:8px;font-size:.88rem;padding:4px 10px 4px 4px;border-radius:999px;background:rgba(255,255,255,0.03);border:1px solid var(--line-2)}
+  .pill.is-lead{border-color:rgba(242,177,52,0.4);background:rgba(242,177,52,0.07)}
+  .ws.cross .pill.is-lead{border-color:rgba(92,214,198,0.4);background:rgba(92,214,198,0.07)}
+  .av{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;background:rgba(148,160,150,.18);color:#cdd4cc;flex-shrink:0}
+  .pill.is-lead .av{background:rgba(242,177,52,0.2);color:var(--amber-2)}
+  .ws.cross .pill.is-lead .av{background:rgba(92,214,198,0.18);color:var(--cyan)}
+  .pill .who{font-weight:600;color:var(--cream)} .pill .lead-tag{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--amber);text-transform:uppercase}
+  .ws.cross .pill .lead-tag{color:var(--cyan)}
+
+  /* generic tooltip (hover + tap/focus) */
+  [data-tip]{position:relative;outline:none}
+  .pill[data-tip]{cursor:help}
+  [data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 10px);left:0;width:260px;max-width:74vw;
+    background:#0c1411;border:1px solid var(--line);border-radius:9px;padding:11px 13px;
+    font-family:'Archivo',sans-serif;font-size:.8rem;font-weight:400;line-height:1.5;letter-spacing:0;text-transform:none;
+    color:var(--cream);opacity:0;visibility:hidden;transform:translateY(5px);transition:opacity .2s,transform .2s;
+    z-index:30;box-shadow:0 14px 34px -12px rgba(0,0,0,.85);pointer-events:none;white-space:normal}
+  [data-tip]:hover::after,[data-tip]:focus::after,[data-tip]:focus-visible::after{opacity:1;visibility:visible;transform:none}
+
+  .focus-label{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+
+  /* OQ PANELS */
+  details.oq{border:1px solid var(--line-2);border-radius:10px;margin-bottom:8px;background:rgba(255,255,255,0.018);overflow:hidden;transition:border-color .3s}
+  details.oq[open]{border-color:var(--line);background:rgba(255,255,255,0.03)}
+  details.oq summary{list-style:none;cursor:pointer;padding:13px 16px;display:flex;align-items:center;gap:12px;font-weight:600;font-size:.96rem}
+  details.oq summary::-webkit-details-marker{display:none}
+  details.oq summary .code{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.03em;padding:3px 8px;border-radius:6px;background:rgba(242,177,52,0.12);color:var(--amber-2);border:1px solid rgba(242,177,52,0.25);flex-shrink:0}
+  details.oq summary .code.hot{background:rgba(255,111,111,0.1);color:var(--red);border-color:rgba(255,111,111,0.35)}
+  details.oq summary .q{flex:1;color:var(--cream)}
+  details.oq summary .plus{color:var(--faint);font-family:'JetBrains Mono';font-size:1.1rem;transition:transform .3s}
+  details.oq[open] summary .plus{transform:rotate(45deg);color:var(--amber)}
+  .oq-body{padding:2px 16px 16px 16px;border-top:1px dashed var(--line-2);margin-top:2px}
+  .oq-body .row{margin-top:14px}
+  .oq-body .k{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+  .oq-body .k.plain{color:var(--cyan)} .oq-body .k.why{color:var(--amber)} .oq-body .k.dir{color:#bdb0e6} .oq-body .k.src{color:var(--faint)}
+  .oq-body .v{color:#d7d3c6;font-size:.96rem}
+  .oq-body .v b{color:var(--cream)}
+  .oq-body .v .prop{color:var(--cream);font-weight:700}
+  .oq-body .v .weigh{color:var(--amber-2);font-weight:700}
+  .oq-body .v .alt{color:var(--muted)}
+  .oq-body a.srcl{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--amber);text-decoration:none;border-bottom:1px solid rgba(242,177,52,0.3)}
+  .oq-body a.srcl:hover{border-color:var(--amber)}
+  .oq-body .src-text{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--muted)}
+  .also{font-size:.86rem;color:var(--faint);margin-top:14px}
+  .also b{color:var(--muted)}
+  .done-tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);border:1px solid rgba(92,214,198,0.35);border-radius:6px;padding:2px 7px;margin-left:auto;flex-shrink:0}
+
+  /* ROSTER */
+  .team{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:8px}
+  .member{display:flex;align-items:center;gap:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+  .m-av{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.85rem;flex-shrink:0}
+  .m-info{flex:1;min-width:0} .m-name{font-weight:700;font-size:1rem} .m-role{font-size:.85rem;color:var(--muted)}
+  .m-ws{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--faint);white-space:nowrap}
+
+  footer{padding:50px 0 80px;border-top:1px solid var(--line-2);color:var(--faint);font-size:.86rem}
+  footer .note{font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.95}
+  footer b{color:var(--muted)} footer a{color:var(--amber);text-decoration:none;border-bottom:1px solid rgba(242,177,52,0.3)}
+
+  @keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}
+  .reveal.in{opacity:1;transform:none}
+  @media(max-width:780px){.two,.team,.links-grid{grid-template-columns:1fr}header{padding:60px 0 36px}}
+
+  /* schema preview component */
+  .schema-lead{font-size:.86rem;color:var(--muted);margin:0 0 9px;line-height:1.5}
+  .schema-lead b{color:var(--cream)}
+  .schema-mount{margin:0 0 18px}
+  .schema-card{border:1px solid var(--line);border-radius:12px;background:#0d100e;overflow:hidden}
+  .sc-tabs{display:flex;align-items:flex-start;gap:4px;background:#0a0c0a;border-bottom:1px solid var(--line-2);padding:6px 6px 0}
+  .sc-tablist{display:flex;flex-wrap:wrap;gap:0;flex:1}
+  .sc-chev{appearance:none;background:transparent;border:0;color:var(--faint);font-size:12px;line-height:1;padding:8px 8px 9px;margin-top:1px;cursor:pointer;transition:transform .3s,color .2s}
+  .sc-chev:hover{color:var(--cyan)}
+  .schema-card.collapsed .sc-chev{transform:rotate(-90deg)}
+  .schema-card.collapsed .sc-collapse{display:none}
+  .schema-card.collapsed .sc-tab.on{border-bottom-color:transparent;color:var(--muted)}
+  .sc-hint{align-self:center;font-size:.76rem;color:var(--faint);font-style:italic;padding:4px 9px;white-space:nowrap}
+  .schema-card:not(.collapsed) .sc-hint{display:none}
+  .sc-tab{appearance:none;background:transparent;border:0;border-bottom:2px solid transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;padding:8px 11px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:color .2s,border-color .2s}
+  .sc-tab:hover{color:var(--cream)}
+  .sc-tab.on{color:var(--cream);border-bottom-color:var(--cyan)}
+  .sc-tab .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+  .dot.d-rat{background:var(--cyan)} .dot.d-prop{background:var(--amber)}
+  .sc-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 15px 11px}
+  .sc-name{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .sc-name .rn{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1rem;color:var(--cream)}
+  .tier{font-size:10px;font-family:'JetBrains Mono',monospace;letter-spacing:.02em;padding:3px 8px;border-radius:6px}
+  .tier.rat{background:rgba(92,214,198,0.12);color:#8fe6d8;border:1px solid rgba(92,214,198,0.3)}
+  .tier.prop{background:rgba(242,177,52,0.1);color:var(--amber-2);border:1px solid rgba(242,177,52,0.3)}
+  .sc-toggle{display:inline-flex;background:#0a0c0a;border:1px solid var(--line-2);border-radius:8px;padding:3px}
+  .sc-toggle button{appearance:none;border:0;background:transparent;color:var(--muted);font-family:'Archivo',sans-serif;font-size:.82rem;padding:5px 11px;border-radius:6px;cursor:pointer;transition:background .2s,color .2s}
+  .sc-toggle button.on{background:var(--cyan);color:#06231f;font-weight:600}
+  .sc-body{padding:2px 15px 14px}
+  .fields{display:flex;flex-direction:column}
+  .frow{display:grid;grid-template-columns:minmax(150px,210px) 1fr;gap:14px;padding:10px 0;border-top:1px solid var(--line-2)}
+  .frow:first-child{border-top:0}
+  .fl{display:flex;align-items:flex-start;gap:7px;flex-wrap:wrap}
+  .fl .fn{font-family:'JetBrains Mono',monospace;font-size:12px;color:#cbd4e6}
+  .fl .ftype{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--faint);background:#0a0c0a;border:1px solid var(--line-2);padding:1px 6px;border-radius:5px;white-space:nowrap}
+  .fr{font-size:.9rem;color:#d2cdbf;line-height:1.5}
+  .fr .fnote code{font-family:'JetBrains Mono',monospace;font-size:.82em;background:#0a0c0a;padding:1px 5px;border-radius:4px;color:var(--cyan)}
+  .fr .fnote b{color:var(--cream)}
+  .tg{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.04em;padding:1px 5px;border-radius:4px;margin-left:4px;vertical-align:middle;white-space:nowrap}
+  .tg-wp{background:rgba(92,214,198,0.12);color:#7fd9cb}
+  .tg-dg{background:rgba(242,177,52,0.13);color:var(--amber-2)}
+  .tg-deferred{background:rgba(255,111,111,0.12);color:#ff9b9b}
+  .tg-fed{background:rgba(167,139,250,0.14);color:#c4b5fd}
+  .sc-body pre{margin:12px 0 4px;background:#08090d;border:1px solid var(--line-2);border-radius:8px;padding:12px 14px;overflow:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.6;color:#cdd6e6;max-height:380px}
+  .nojson{margin:14px 0;font-size:.88rem;color:var(--muted);font-style:italic}
+  .sc-legend{border-top:1px solid var(--line-2);background:#0a0c0a}
+  .sc-legend summary{list-style:none;cursor:pointer;padding:9px 15px;font-size:.8rem;color:var(--cyan);font-family:'JetBrains Mono',monospace}
+  .sc-legend summary::-webkit-details-marker{display:none}
+  .sc-legend summary:before{content:"▸ ";color:var(--faint)}
+  .sc-legend[open] summary:before{content:"▾ "}
+  .sc-legend .leg{display:flex;flex-wrap:wrap;gap:8px 18px;padding:2px 15px 13px;font-size:.78rem;color:var(--muted)}
+  .sc-foot{padding:10px 15px;border-top:1px solid var(--line-2);font-size:.78rem;color:var(--faint)}
+  .sc-foot a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(92,214,198,.3)}
+  @media(max-width:560px){.frow{grid-template-columns:1fr;gap:5px}}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<!-- HERO -->
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Integral · Phase 1 · A proposal for the working groups</div>
+    <h1>Get the foundation<br><span class="it">right</span>, once.</h1>
+    <p class="sub">Before anyone writes production code, we agree on the <b>shape of Integral's data</b> — the schema. This page explains why the Dev Guide treats that as the single highest-leverage job in the project, what questions we still need to answer together, and who's doing what.</p>
+    <div class="meta-row">
+      <span class="chip">A <b>plain-language</b> walkthrough</span>
+      <span class="chip"><b>9</b> workstreams</span>
+      <span class="chip"><b>17</b> open questions</span>
+      <span class="chip red">2 must close before Phase 2</span>
+    </div>
+  </div>
+</header>
+
+<!-- WHY IT MATTERS -->
+<section>
+  <div class="wrap narrow">
+    <div class="sec-tag">// Why this work, and why now</div>
+    <h2>This is pouring the <span class="accent">foundation</span></h2>
+    <div class="prose">
+      <p>Imagine building a house. You could start framing walls tomorrow — or spend a few extra days making sure every measurement on the foundation is right. With walls, a mistake is annoying to fix. With the foundation, it's not.</p>
+      <p>The <b>schema</b> is Integral's foundation. It's the agreed shape of every record the system keeps — a decision, a unit of work, a credit, a design, a signal. The Dev Guide is unusually blunt about how much this matters:</p>
+      <div class="pull">
+        "This is not glamorous work and it does not produce running software — but it is arguably the highest-leverage technical work in the entire project."
+        <cite>Integral Dev Guide · §5.1</cite>
+      </div>
+      <p>The reason is simple. Integral's records live in <b>append-only ledgers</b> — a permanent history that's never rewritten. That's a feature: it's how the system stays honest and accountable. But it also means that <b>whatever shape we choose, every record ever written is stuck in it.</b></p>
+    </div>
+    <div class="two">
+      <div class="ccard good reveal">
+        <h3><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Do the exercise first</h3>
+        <p>Every team builds against one complete, agreed shape. The five systems connect cleanly the first time, and the records we write today still make sense years from now.</p>
+      </div>
+      <div class="ccard bad reveal">
+        <h3><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9l-8 14A2 2 0 004 21h16a2 2 0 001.7-3l-8-14a2 2 0 00-3.4 0z"/></svg> Skip it and build fast</h3>
+        <p>A quick local win — then a permanent problem. The ledgers fill with records in a shape that doesn't fit, and that mismatch is carried forever or fixed at very high cost. This exercise is the insurance against that.</p>
+      </div>
+    </div>
+
+    <details class="dg" style="margin-top:26px">
+      <summary>📖 Read the actual Dev Guide passage — right here <span class="plus">+</span></summary>
+      <blockquote>
+        <p>"Before Phase 2 development begins, a deliberate schema design exercise must be completed… Working group by working group, contributors sit with the white paper's full module specifications and the data contracts in Section 4, and ask of every object and every field: <b>will the full system eventually need this, and if so, is it represented in the schema?</b></p>
+        <p>The output of this exercise is a ratified, complete schema for each system — with all deferred fields present as typed, nullable placeholders — before the first line of production code is written. Teams that skip this step and build quickly against an incomplete schema will produce a local success and a future migration problem. The append-only ledgers that form the system's institutional memory will contain records in an incompatible format. That is not a bug that gets fixed — it is a constraint that gets carried indefinitely or resolved at very high cost. <b>The schema design exercise is the insurance against that outcome. Its completion is a condition for Phase 2 to begin.</b>"</p>
+      </blockquote>
+      <div class="cite">Dev Guide §5.1 · <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#51-phase-1--governance-and-system-definition" target="_blank" rel="noopener">view on GitHub ↗</a></div>
+    </details>
+
+    <details class="dg">
+      <summary>📖 …and why coupling makes this critical (Dev Guide §4.1) <span class="plus">+</span></summary>
+      <blockquote>
+        <p>"The five systems of Integral are not independent applications that happen to share a network. They are deeply coupled components of a single architecture… If COS produces labor event records in a format that ITC cannot reliably consume, contribution accounting breaks. If ITC's credit records do not carry the fields that FRS needs to assess equity patterns, the feedback loop is blind to fairness drift.</p>
+        <p>These are not bugs that can be fixed later with a patch. They are structural incompatibilities that require schema migrations, data backfilling, and potentially the invalidation of historical records — exactly the kind of disruption that destroys institutional memory and erodes contributor trust in a young project."</p>
+      </blockquote>
+      <div class="cite">Dev Guide §4.1 — "Why Data Architecture Comes First" · <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#41-why-data-architecture-comes-first" target="_blank" rel="noopener">view on GitHub ↗</a></div>
+    </details>
+
+    <div style="margin-top:26px">
+      <a class="source-cta" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">
+        <span class="arr">↗</span>
+        <span>Open the full Dev Guide<small>The complete development guide on GitHub</small></span>
+        <span class="gh">github.com/Integral-Collective</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- TRANSPARENCY / SEE FOR YOURSELF -->
+<section>
+  <div class="wrap narrow">
+    <div class="sec-tag">// Before we go further — a fair question</div>
+    <h2>"Hasn't this <span class="accent">already been decided</span>, then?"</h2>
+    <div class="qa reveal">
+      <div class="q">Short answer: no. Nothing here is adopted.</div>
+      <p>A first <b>candidate draft</b> of the schema already exists — but it was built precisely so the community has something concrete to react to, not a blank page to stare at. It's far easier to challenge a real proposal than to design one from scratch in a meeting.</p>
+      <p>Every choice in it is labelled as a proposal, and the <b>hardest questions were deliberately left open</b> — that's exactly what this Phase 1 round is for. In the words of the draft itself: it is <i>"offered to the collective to challenge, refine, and ratify."</i> The teams below are how we do that, together.</p>
+    </div>
+    <p class="lead" style="margin-bottom:6px">See the Integral Phase 1 schema candidate for yourself — three ways in, all public:</p>
+    <p class="mono" style="font-size:.84rem;color:var(--faint);letter-spacing:.02em;margin-bottom:18px;max-width:720px;line-height:1.7">Grounded in the <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#42-the-core-data-contracts-between-systems" target="_blank" rel="noopener" style="color:var(--amber);text-decoration:none;border-bottom:1px solid rgba(242,177,52,.3)">Dev Guide's §4 data contracts</a> and the Technical White Paper's module specs — reconciled field by field, with every field tagged to its source. Nothing here was invented from scratch.</p>
+    <div class="links-grid">
+      <a class="link-card reveal" href="https://tairea.github.io/integral-phase-1/" target="_blank" rel="noopener">
+        <div class="lc-top"><span class="lc-ic">▶</span><span class="lc-title">Interactive walkthroughs</span><span class="lc-arr">↗</span></div>
+        <div class="lc-desc">Step through each system one decision at a time and watch exactly which data objects get created and updated. Best place to start.</div>
+      </a>
+      <a class="link-card reveal" href="https://github.com/tairea/integral-phase-1/tree/main/integral-schema-exercise/schemas" target="_blank" rel="noopener">
+        <div class="lc-top"><span class="lc-ic">📐</span><span class="lc-title">The candidate schemas</span><span class="lc-arr">↗</span></div>
+        <div class="lc-desc">The 14 actual data contracts (JSON), categorised by system. The precise artifact we're reviewing.</div>
+      </a>
+      <a class="link-card reveal" href="https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/07-open-questions.md" target="_blank" rel="noopener">
+        <div class="lc-top"><span class="lc-ic">❓</span><span class="lc-title">The open questions</span><span class="lc-arr">↗</span></div>
+        <div class="lc-desc">All 17, written up in full. Deliberately still open — the raw material for the workstreams below.</div>
+      </a>
+      <a class="link-card reveal" href="https://github.com/tairea/integral-phase-1/tree/main/simulator" target="_blank" rel="noopener">
+        <div class="lc-top"><span class="lc-ic">⏳</span><span class="lc-title">A live CDS simulator</span><span class="lc-arr">↗</span></div>
+        <div class="lc-desc">Runs realistic participant input through the real CDS contracts and validates every record against the schema.</div>
+      </a>
+    </div>
+    <p class="lead" style="margin-top:22px;font-size:.98rem">Each walkthrough follows one community — <b style="color:var(--cream)">Stillwater</b> — and one storyline (a flooding footbridge), so you can watch the five systems hand data to one another in a single loop. When a workstream below has a walkthrough, you'll see a <span style="color:var(--cyan)">▶ button</span> to see that system in action.</p>
+  </div>
+</section>
+
+<!-- WHAT ARE THE OQs -->
+<section>
+  <div class="wrap narrow">
+    <div class="sec-tag">// What we're actually deciding</div>
+    <h2>So what are these <span class="accent">"open questions"?</span></h2>
+    <div class="prose">
+      <p>The Dev Guide gives a clear instruction: sit with the full specifications and, for <b>every object and every field</b>, ask one question —</p>
+      <div class="pull" style="font-size:1.25rem">"Will the full system eventually need this, and if so, is it represented in the schema?"<cite>Integral Dev Guide · §5.1</cite></div>
+      <p>We did exactly that, against the candidate draft. The exercise surfaced <b>17 genuine open questions</b> — places where the source documents leave a real choice, or quietly disagree with each other. Each comes with a proposed direction, but <b>none are decided.</b> Deciding them together is the work.</p>
+      <p>Two questions are marked <b style="color:var(--red)">🔴 must-close</b>: the system genuinely cannot begin Phase 2 until they're settled. The rest can be resolved alongside the build or safely deferred — each is labelled so you can see which is which.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FLOW -->
+<section>
+  <div class="wrap">
+    <div class="sec-tag">// How the work flows</div>
+    <h2>Foundation first, then everyone in <span class="accent">parallel</span></h2>
+    <p class="lead" style="margin-bottom:26px">One team agrees the ground rules. Then the five system teams work side by side. Two small review teams check the whole set, and a final session ratifies it — the moment Phase 2 begins.</p>
+    <div class="diagram reveal">
+      <svg viewBox="0 0 1000 380" role="img" aria-label="How Phase 1 work flows">
+        <defs>
+          <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L7,3 L0,6 Z" fill="#5f6b62"/></marker>
+          <style>
+            .node{fill:#141b17;stroke-width:1.8}
+            .lbl{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;fill:#f3eee1}
+            .wsn{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.04em;fill:#f2b134}
+            .sm{font-family:'Archivo',sans-serif;font-size:9.5px;fill:#9aa39b}
+            .ln{stroke:#5f6b62;stroke-width:1.4;fill:none;marker-end:url(#arr);opacity:.7}
+          </style>
+        </defs>
+
+        <!-- W0 -->
+        <rect class="node" x="18" y="150" width="178" height="70" rx="11" stroke="#ff6f6f"/>
+        <text class="wsn" x="34" y="174" fill="#ff6f6f">WORKSTREAM-0</text>
+        <text class="lbl" x="34" y="192">Ground rules</text>
+        <text class="sm" x="34" y="208">shared format · 1 blocker</text>
+        <path class="ln" d="M196,180 C252,120 272,66 314,66"/>
+        <path class="ln" d="M196,184 C252,140 272,128 314,128"/>
+        <path class="ln" d="M196,188 C262,188 282,190 314,190"/>
+        <path class="ln" d="M196,192 C252,240 272,250 314,250"/>
+        <path class="ln" d="M196,196 C252,300 272,312 314,312"/>
+
+        <!-- pods -->
+        <rect class="node" x="314" y="40" width="184" height="54" rx="10" stroke="#f2b134"/>
+        <text class="wsn" x="330" y="58">WORKSTREAM-1</text><text class="lbl" x="330" y="74">CDS · decisions</text><text class="sm" x="330" y="88">Filipe · Leanne · Sam · Régis +2</text>
+        <rect class="node" x="314" y="102" width="184" height="54" rx="10" stroke="#ff6f6f"/>
+        <text class="wsn" x="330" y="120" fill="#ff6f6f">WORKSTREAM-2</text><text class="lbl" x="330" y="136" fill="#ff6f6f">ITC · credits 🔴</text><text class="sm" x="330" y="150">Leanne · Lynn · Ben · Verta · Peter</text>
+        <rect class="node" x="314" y="164" width="184" height="54" rx="10" stroke="#f2b134"/>
+        <text class="wsn" x="330" y="182">WORKSTREAM-3</text><text class="lbl" x="330" y="198">OAD · designs</text><text class="sm" x="330" y="212">David · Marcus · Vicente · Lynn</text>
+        <rect class="node" x="314" y="226" width="184" height="54" rx="10" stroke="#f2b134"/>
+        <text class="wsn" x="330" y="244">WORKSTREAM-4</text><text class="lbl" x="330" y="260">COS · production</text><text class="sm" x="330" y="274">Marcus · Ben · Lynn · J-P · Sabrina</text>
+        <rect class="node" x="314" y="288" width="184" height="54" rx="10" stroke="#f2b134"/>
+        <text class="wsn" x="330" y="306">WORKSTREAM-5</text><text class="lbl" x="330" y="322">FRS · feedback</text><text class="sm" x="330" y="336">Alex · David · Vitali</text>
+
+        <!-- pods -> W6 -->
+        <path class="ln" d="M498,66 C548,100 568,160 606,178"/>
+        <path class="ln" d="M498,128 C548,150 568,170 606,186"/>
+        <path class="ln" d="M498,190 C553,190 583,192 606,192"/>
+        <path class="ln" d="M498,252 C548,230 568,205 606,198"/>
+        <path class="ln" d="M498,314 C548,270 568,215 606,205"/>
+
+        <!-- W6 -->
+        <rect class="node" x="606" y="160" width="160" height="64" rx="11" stroke="#5cd6c6"/>
+        <text class="wsn" x="622" y="180" fill="#5cd6c6">WORKSTREAM-6</text><text class="lbl" x="622" y="198">Network check</text><text class="sm" x="622" y="214">Lukas · Kees · Jason</text>
+        <path class="ln" d="M766,192 L788,192"/>
+
+        <!-- W7 -->
+        <rect class="node" x="788" y="160" width="168" height="64" rx="11" stroke="#5cd6c6"/>
+        <text class="wsn" x="804" y="180" fill="#5cd6c6">WORKSTREAM-7</text><text class="lbl" x="804" y="198">Safety check</text><text class="sm" x="804" y="214">Vitali · Kees</text>
+        <path class="ln" d="M872,224 L872,288"/>
+
+        <!-- W8 -->
+        <rect class="node" x="724" y="290" width="232" height="66" rx="12" stroke="#f2b134"/>
+        <text class="wsn" x="740" y="312">WORKSTREAM-8</text><text class="lbl" x="740" y="330" fill="#f2b134">Ratify → Phase 2 opens</text><text class="sm" x="740" y="346">Ian · Filipe · Władymór +2</text>
+      </svg>
+      <div class="legend">
+        <span><i class="dot" style="background:#ff6f6f"></i> Must close before Phase 2 (W0, W2)</span>
+        <span><i class="dot" style="background:#f2b134"></i> System team / final gate</span>
+        <span><i class="dot" style="background:#5cd6c6"></i> Cross-checking team</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WORKSTREAMS -->
+<section>
+  <div class="wrap">
+    <div class="sec-tag">// The teams &amp; what each is deciding</div>
+    <h2>Nine workstreams, <span class="accent">in plain terms</span></h2>
+    <p class="lead" style="margin-bottom:30px">Each workstream has a lead, its members, and the questions it owns. <b>Hover or tap a name</b> to see why they're recommended; <b>tap any question</b> for what it means, why it matters, the directions on the table, and where it comes from.</p>
+
+    <!-- W0 -->
+    <div class="ws blocker reveal">
+      <div class="ws-top"><span class="ws-id">WORKSTREAM-0 · GROUND RULES</span><span class="sev crit">🔴 everything waits on this</span></div>
+      <h3>Agree the shared format &amp; vocabulary</h3>
+      <div class="team-row">
+        <span class="pill is-lead" tabindex="0" data-tip="Ian — coordinating the Phase 1 exercise; takes the Ground Rules lead to lock the shared format and vocabulary every other workstream builds on (and still leads W8, the finish line, since the two never run at the same time)."><span class="av">IN</span><span><span class="lead-tag">Lead</span> <span class="who">Ian</span></span></span>
+        <span class="pill" tabindex="0" data-tip="Federico — Master's in Business Intelligence &amp; Big Data Analytics; data modeling is his core skill, central to getting the shared format right."><span class="av">FE</span><span class="who">Federico</span></span>
+        <span class="pill" tabindex="0" data-tip="Filipe Beck — already building the CDS in a clean modular architecture, so he knows these contracts first-hand."><span class="av">FB</span><span class="who">Filipe Beck</span></span>
+        <span class="pill" tabindex="0" data-tip="Ben — 15 years full-stack on lab information-management systems; deep experience with structured, permanent records."><span class="av">BN</span><span class="who">Ben</span></span>
+        <span class="pill" tabindex="0" data-tip="Michael — tech-support pro who specialises in collapsing complexity into simplicity; helps keep the shared format usable, not just technically correct."><span class="av">MI</span><span class="who">Michael</span></span>
+      </div>
+      <p class="deliver">Pick the one format the official schema is written in (machine-checkable, so it's verified automatically), and lock the shared lists of values every system reuses. No other team can finalize until this is set.</p>
+      <div class="focus-label">Question this team owns</div>
+      <details class="oq"><summary><span class="code hot">OPEN-QUESTION-01</span><span class="q">Which format is the "official" schema written in?</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">We choose one format that a computer can check automatically, so every team builds against the <b>exact same definition</b> — not their own reading of a document.</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">This decides how every other piece of work is written and reviewed. Until it's set, two teams can read the same spec and build incompatible things.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> keep JSON Schema as the source of truth (checkable, automatable), with readable docs kept beside it; leave language-specific versions to Phase 2. <br><span class="weigh">Worth weighing:</span> <span class="alt">is machine-checking worth a small learning curve, versus plain annotated documents anyone can edit?</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><a class="srcl" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#51-phase-1--governance-and-system-definition" target="_blank" rel="noopener">Dev Guide §5.1 ↗</a>
+            <details class="dg"><summary>📖 Read the passage here <span class="plus">+</span></summary>
+              <blockquote><p>"The output of this exercise is a ratified, complete schema for each system — with all deferred fields present as typed, nullable placeholders — before the first line of production code is written."</p></blockquote>
+              <div class="cite">Dev Guide §5.1</div>
+            </details>
+          </div></div>
+        </div>
+      </details>
+    </div>
+
+    <!-- W1 CDS -->
+    <div class="ws reveal">
+      <div class="ws-top"><span class="ws-id">WORKSTREAM-1 · CDS — DECISIONS</span><span class="sev">the priority system</span></div>
+      <h3>How the community makes &amp; records decisions</h3>
+      <div class="team-row">
+        <span class="pill is-lead" tabindex="0" data-tip="Filipe Beck — software developer already implementing the CDS (modules 1–2) in a clean, modular architecture. He's living in these contracts."><span class="av">FB</span><span><span class="lead-tag">Lead</span> <span class="who">Filipe Beck</span></span></span>
+        <span class="pill" tabindex="0" data-tip="Leanne — heterodox economist (PhD) building ValueFlows accounting models; sharp on consensus and fairness."><span class="av">LE</span><span class="who">Leanne</span></span>
+        <span class="pill" tabindex="0" data-tip="Sam — master's thesis on timebanks plus the Viable System Model; strong governance and participation domain knowledge."><span class="av">SW</span><span class="who">Sam</span></span>
+        <span class="pill" tabindex="0" data-tip="Régis — front-end developer and theoretician who specifically called the CDS the most urgent system to help with."><span class="av">RG</span><span class="who">Régis</span></span>
+        <span class="pill" tabindex="0" data-tip="Maveritori — organisational-systems and cybernetics background with program / change-management experience; a lens on how governance is structured."><span class="av">MV</span><span class="who">Maveritori</span></span>
+        <span class="pill" tabindex="0" data-tip="Serf — transition-management researcher grounded in systems thinking and the commons; specifically keen on the CDS."><span class="av">SF</span><span class="who">Serf</span></span>
+      </div>
+      <p class="deliver">Lock the shape of an issue, a submission, a decision, and the packet that carries a decision to another system. The Dev Guide makes governance (CDS) the first priority — the project needs a legitimate way to decide things before everything else.</p>
+      <div class="schema-lead"><b>Proposed schemas, for context</b> — the data contracts this workstream would lock in. Tap a contract to expand it, then switch plain-language ⇄ JSON. These are the same shapes the walkthrough builds in action.</div>
+      <div class="schema-mount" data-mod="cds"></div>
+      <a class="walk" href="https://tairea.github.io/integral-phase-1/CDS-Start-Here/" target="_blank" rel="noopener">
+        <span class="walk-ic">▶</span><span><span class="wt">Walk through the CDS</span><small>Watch Stillwater turn the flooding footbridge into a ratified decision</small></span><span class="arr">↗</span>
+      </a>
+      <div class="focus-label">Questions this team owns</div>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-17</span><span class="q">There's no way to file a simple "problem report"</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">The most common thing a member does is report a problem — "the footbridge floods." But the current list of submission types (proposal, objection, evidence, comment, signal) has no slot for that.</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">If a plain problem report has no home, every community invents its own label and the data fragments — exactly what a shared schema exists to prevent. Our test simulator hit this immediately.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> add <b>"concern"</b> as a sixth submission type. <br><span class="weigh">Worth weighing:</span> <span class="alt">folding problem reports into "comment" loses the "this needs resolving" signal — and treating every report as a "proposal" overstates intent (a report isn't yet a proposed action).</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><span class="src-text">White Paper — CDS Module 1; surfaced by the data-flow simulator</span></div></div>
+        </div>
+      </details>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-14</span><span class="q">Should every vote count equally?</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">Normally one person = one vote. The question is whether expert input should ever weigh more in narrow cases.</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">This is the equality-vs-expertise tension made concrete. Adding a weighting column to a permanent ledger later is very costly — so we reserve the space now even if we never use it.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> keep the field, default it to equal (1.0), and lock any unequal value behind a policy the community must ratify. <br><span class="weigh">Worth weighing:</span> <span class="alt">whether to allow unequal voting <b>at all</b> is a values question, not a technical one — member input wanted.</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><span class="src-text">White Paper — CDS Module 6; Ep.59 discussion</span></div></div>
+        </div>
+      </details>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-15</span><span class="q">Where do the "consensus reached" numbers live?</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">The thresholds that decide "we've reached agreement" — should they be settings each community can tune, or fixed in code?</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">Lets each node adapt its own governance and lets the wider network learn what works.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> the numbers live in a tunable policy record per node; the agreement <i>labels</i> (e.g. "strong support") stay fixed and shared. <br><span class="weigh">Worth weighing:</span> <span class="alt">if every node tunes freely, governance styles could become hard to compare across the network — what should stay standard?</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><span class="src-text">White Paper consensus model; Ep.59 (1:00:45)</span></div></div>
+        </div>
+      </details>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-13</span><span class="q">Do co-ops get their own decision system, or share the node's?</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">Co-ops run a smaller version of the decision process and escalate bigger matters up to the node. Same schema, or a separate one?</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">Affects every community with more than one co-op (Phase 3+). Keeping records uniform across levels makes escalation simple.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> one schema, tagged with a "scope" and a record of what it escalated from. <br><span class="weigh">Worth weighing:</span> <span class="alt">a distinct sub-schema for co-ops gives cleaner separation, but means two things to maintain and map between.</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><span class="src-text">Ep.59 (30:37)</span></div></div>
+        </div>
+      </details>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-06</span><span class="q">Should a decision remember which community it came from?</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">For a future network of many communities, add an optional field noting a decision's origin. It stays empty while we're a single community.</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">Cheap to add now, painful to retrofit into a permanent ledger later.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> add the optional origin field now, leave it null in single-community use. <br><span class="weigh">Worth weighing:</span> <span class="alt">is a single "origin node" enough, or will cross-community decisions later need richer provenance (who referenced or ratified it)?</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><a class="srcl" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#42-the-core-data-contracts-between-systems" target="_blank" rel="noopener">Dev Guide §4.2 ↗</a>
+            <details class="dg"><summary>📖 Read the passage here <span class="plus">+</span></summary>
+              <blockquote><p>"Every participant ID should be structured as <span class="mono">node-id:participant-id</span>… Every decision record should include the originating node… Building these fields in now — even though they will mostly be null in the early build — is the difference between a federation migration that takes days and one that takes months and corrupts historical records."</p></blockquote>
+              <div class="cite">Dev Guide §4.1–§4.2 (federation fields)</div>
+            </details>
+          </div></div>
+        </div>
+      </details>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-12</span><span class="q">Use the decision system to record our own decisions?</span><span class="done-tag">✅ done</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">We record this very ratification using the governance schema we're defining — which both proves it works and produces the project's first real decision records.</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">The best test of a schema is using it for real. Building the first record already caught and fixed a missing field.</div></div>
+          <div class="row"><div class="k dir">Status</div><div class="v"><span class="prop">Already actioned:</span> recorded as decision record <a class="srcl" tabindex="0" data-tip="DR-001 “Adopt schema baseline” — the project's first real decision record, created with the CDS schema itself to prove it validates. Click to open it on GitHub." href="https://github.com/tairea/integral-phase-1/tree/main/integral-schema-exercise/decisions/DR-001-adopt-schema-baseline" target="_blank" rel="noopener">DR-001 ↗</a>, which validated cleanly against the CDS schema. <br><span class="weigh">Worth weighing:</span> <span class="alt">should <i>every</i> Phase-1 governance decision be recorded this way, to build the habit early?</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><span class="src-text">Dev Guide §6.3 — "provisional precursor to CDS"</span></div></div>
+        </div>
+      </details>
+    </div>
+
+    <!-- W2 ITC -->
+    <div class="ws blocker reveal">
+      <div class="ws-top"><span class="ws-id">WORKSTREAM-2 · ITC — CREDITS</span><span class="sev crit">🔴 contains a must-close</span></div>
+      <h3>How contribution is credited &amp; how credits fade</h3>
+      <div class="team-row">
+        <span class="pill is-lead" tabindex="0" data-tip="Leanne — heterodox economist (PhD) building ValueFlows accounting models; credit decay is a non-accumulation question and she thinks in quantities, not prices — a natural lead for the credit ledger."><span class="av">LE</span><span><span class="lead-tag">Lead</span> <span class="who">Leanne</span></span></span>
+        <span class="pill" tabindex="0" data-tip="Lynn Foster — maintainer of ValueFlows, an economic resource-flow ontology; the credit ledger is exactly her domain. Joining as a modelling team member at her request."><span class="av">LF</span><span class="who">Lynn Foster</span></span>
+        <span class="pill" tabindex="0" data-tip="Ben — 15 years full-stack on systems built around append-only, auditable records; ideal for ledger integrity."><span class="av">BN</span><span class="who">Ben</span></span>
+        <span class="pill" tabindex="0" data-tip="Verta — Creative Director steeped in Cottrell–Cockshott labor-time accounting and connected to worker co-ops; apt for the time-credit model."><span class="av">VT</span><span class="who">Verta</span></span>
+        <span class="pill" tabindex="0" data-tip="Peter Joseph — originator of Integral's vision and the authority on the credit non-accumulation and extinguishment principles this workstream protects."><span class="av">PJ</span><span class="who">Peter Joseph</span></span>
+      </div>
+      <p class="deliver">Lock the shape of a member's credit account and the ledger that records every issue and use of credit. Credits in Integral aren't money — they fade over time and disappear when used, so the rules here protect a core principle.</p>
+      <div class="schema-lead"><b>Proposed schemas, for context</b> — the data contracts this workstream would lock in. Tap a contract to expand it, then switch plain-language ⇄ JSON. These are the same shapes the walkthrough builds in action.</div>
+      <div class="schema-mount" data-mod="itc"></div>
+      <a class="walk" href="https://tairea.github.io/integral-phase-1/ITC-Start-Here/" target="_blank" rel="noopener">
+        <span class="walk-ic">▶</span><span><span class="wt">Walk through the ITC</span><small>See credits issued for footbridge work, then extinguished on access</small></span><span class="arr">↗</span>
+      </a>
+      <div class="focus-label">Questions this team owns</div>
+      <details class="oq"><summary><span class="code hot">OPEN-QUESTION-04</span><span class="q">Keeping the "decay" setting from drifting apart</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">Credits fade over time so they can't pile up like money. That fade setting is stored in two places. We need a rule so the two can never disagree.</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">This protects the promise that credits don't accumulate — one of Integral's foundational principles. If the two copies drift, the math behind the whole credit system becomes untrustworthy.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> the account stores only the rule's <b>ID</b>; the inline numbers are a read-only copy refreshed automatically each time decay is applied, and never edited directly. <br><span class="weigh">Worth weighing:</span> <span class="alt">the master copy lives in governance (CDS) — we need to confirm the refresh timing so an account never decays using stale settings.</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><a class="srcl" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#42-the-core-data-contracts-between-systems" target="_blank" rel="noopener">Dev Guide §4.2 — CDS→ITC Policy Signal ↗</a> · White Paper §1.3
+            <details class="dg"><summary>📖 Read the passage here <span class="plus">+</span></summary>
+              <blockquote><p>"<b>CDS → ITC: The Policy Signal</b> — The contract by which CDS governance decisions become the normative rules that ITC operates within. This includes labor weighting parameters, <b>decay rules</b>, fairness thresholds, access policy modifications, and anti-coercion boundaries. ITC does not set its own policy — CDS does."</p></blockquote>
+              <div class="cite">Dev Guide §4.2</div>
+            </details>
+          </div></div>
+        </div>
+      </details>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-03</span><span class="q">Keep "raw work done" and "credited value" as one record or two?</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">When work is recorded there's the raw fact ("X did 3 hours") and the credited value derived from it. One record or two?</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">The raw record is meant to be value-neutral. If we ever re-credit work under a new fairness policy, we must not rewrite what actually happened.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> merge into one record, but <b>freeze the raw part</b> once written and version the credit part separately. Ratify the freeze rule now. <br><span class="weigh">Worth weighing:</span> <span class="alt">if a future policy re-weights old work, does versioning the credit block fully preserve the original — or do we ultimately need two separate records?</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><a class="srcl" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#43-fields-that-must-exist-from-day-one-even-if-empty" target="_blank" rel="noopener">Dev Guide §4.3 ↗</a>
+            <details class="dg"><summary>📖 Read the passage here <span class="plus">+</span></summary>
+              <blockquote><p>"The white paper separates raw labor capture (<span class="mono">LaborEvent</span>) from weighted contribution recognition (<span class="mono">WeightedLaborRecord</span>). This is architecturally significant: the labor event is value-neutral until weighting is applied… the boundary between raw capture and weighted output must be preserved in the field structure."</p></blockquote>
+              <div class="cite">Dev Guide §4.3 — The Labor Event Record</div>
+            </details>
+          </div></div>
+        </div>
+      </details>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-07</span><span class="q">One shared scale for "how serious is this?"</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">Different systems currently rate seriousness on different scales (3 levels vs 5).</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">The feedback system needs to compare issues across systems — impossible if each one uses its own scale.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> one shared 5-level scale, mapping the credit system's "warning" onto "moderate." <br><span class="weigh">Worth weighing:</span> <span class="alt">ethics violations may deserve their own scale — e.g. a hard "critical" floor for coercion. Practitioner input wanted.</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><span class="src-text">White Paper — ITC / FRS / CDS severity definitions</span></div></div>
+        </div>
+      </details>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-08</span><span class="q">One shared word for "spending" a credit</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">Two systems describe the same event — a credit being used up to access something.</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">This is the heart of the "credits are extinguished on access" loop — the moment a credit does its job and disappears.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> confirm both systems use one shared "access mode" vocabulary — two views of the same event that must never diverge. <br><span class="weigh">Worth weighing:</span> <span class="alt">is there ever a legitimate case where "spent" and "accessed" should differ? If not, lock them as one.</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><span class="src-text">White Paper — ITC redemption / COS distribution</span></div></div>
+        </div>
+      </details>
+    </div>
+
+    <!-- W3 OAD -->
+    <div class="ws reveal">
+      <div class="ws-top"><span class="ws-id">WORKSTREAM-3 · OAD — DESIGNS</span><span class="sev">how designs are recorded</span></div>
+      <h3>How a certified design is described &amp; tracked</h3>
+      <div class="team-row">
+        <span class="pill is-lead" tabindex="0" data-tip="David — MS Systems Engineering with MBSE / SysML; formal modeling of designs is his strength, and OAD is his stated top interest."><span class="av">DV</span><span><span class="lead-tag">Lead</span> <span class="who">David</span></span></span>
+        <span class="pill" tabindex="0" data-tip="Marcus Barrick — systems engineer with industrial-simulation and modular-architecture experience; strong on design-to-production structure."><span class="av">MB</span><span class="who">Marcus Barrick</span></span>
+        <span class="pill" tabindex="0" data-tip="Vicente — mechanical engineer; brings a practical design-and-build perspective to how certified designs get specified."><span class="av">VC</span><span class="who">Vicente</span></span>
+        <span class="pill" tabindex="0" data-tip="Lynn Foster — ValueFlows models how designs become recipes for production; she joins as a modelling team member to keep the design record interoperable with credit and feedback."><span class="av">LF</span><span class="who">Lynn Foster</span></span>
+      </div>
+      <p class="deliver">Lock the shape of a certified design and its change history, so the credit and feedback systems can rely on it.</p>
+      <div class="schema-lead"><b>Proposed schemas, for context</b> — the data contracts this workstream would lock in. Tap a contract to expand it, then switch plain-language ⇄ JSON. These are the same shapes the walkthrough builds in action.</div>
+      <div class="schema-mount" data-mod="oad"></div>
+      <a class="walk" href="https://tairea.github.io/integral-phase-1/OAD-Start-Here/" target="_blank" rel="noopener">
+        <span class="walk-ic">▶</span><span><span class="wt">Walk through the OAD</span><small>Follow the footbridge design from draft to certified, ready to build</small></span><span class="arr">↗</span>
+      </a>
+      <div class="focus-label">Questions this team owns</div>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-02</span><span class="q">Save a design's "value signal," or recalculate it each time?</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">When a certified design hands a condensed "value signal" to the credit system, do we save a snapshot or recompute it every time it's read?</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">Stable, auditable credit values you can trace back — versus numbers that silently change underneath you.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> save a snapshot, stamped with the design version and policy that produced it. <br><span class="weigh">Worth weighing:</span> <span class="alt">computing on read is always fresh, but costs recompute and keeps no historical snapshot to audit against.</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><a class="srcl" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#42-the-core-data-contracts-between-systems" target="_blank" rel="noopener">Dev Guide §4.2 — contract #2 ↗</a>
+            <details class="dg"><summary>📖 Read the passage here <span class="plus">+</span></summary>
+              <blockquote><p>"<b>OAD → ITC: The Design Intelligence Signal</b> — The contract by which OAD certified designs become structured inputs to ITC valuation… When a design is updated or recertified, ITC must receive the updated intelligence to keep access valuations grounded in current design reality."</p></blockquote>
+              <div class="cite">Dev Guide §4.2</div>
+            </details>
+          </div></div>
+        </div>
+      </details>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-05</span><span class="q">Make design history machine-readable</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">A design's change history is currently free-form text for humans. The feedback system needs it as structured events it can read.</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">Enables the feedback system to learn from how designs evolve and get re-certified.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> add structured design + certification-change events as first-class records, and keep the free-text changelog as the human-readable narrative alongside them. <br><span class="weigh">Worth weighing:</span> <span class="alt">how much history is worth capturing as structured events versus left as narrative — where's the sensible line?</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><span class="src-text">White Paper — OAD; Dev Guide §4.2 contract #3 (OAD→FRS)</span></div></div>
+        </div>
+      </details>
+    </div>
+
+    <!-- W4 COS -->
+    <div class="ws reveal">
+      <div class="ws-top"><span class="ws-id">WORKSTREAM-4 · COS — PRODUCTION</span><span class="sev">making &amp; distributing things</span></div>
+      <h3>How work &amp; materials are recorded in production</h3>
+      <div class="team-row">
+        <span class="pill is-lead" tabindex="0" data-tip="Marcus Barrick — industrial-simulation engineer who built a modular architecture for electromechanical processes; production workflows are his domain."><span class="av">MB</span><span><span class="lead-tag">Lead</span> <span class="who">Marcus Barrick</span></span></span>
+        <span class="pill" tabindex="0" data-tip="Ben — full-stack on lab information-management systems, which are essentially structured production/consumption records."><span class="av">BN</span><span class="who">Ben</span></span>
+        <span class="pill" tabindex="0" data-tip="Lynn Foster — ValueFlows models resource flows (materials in, products out); directly overlaps with COS records."><span class="av">LF</span><span class="who">Lynn Foster</span></span>
+        <span class="pill" tabindex="0" data-tip="Jean-Philippe — runs a tool-library / makerspace (3D printing, woodwork, metal); grounds production records in real shop-floor reality."><span class="av">JP</span><span class="who">Jean-Philippe</span></span>
+        <span class="pill" tabindex="0" data-tip="Sabrina — environmental-science and resource-management background; sharpens how materials and ecological cost are recorded."><span class="av">SB</span><span class="who">Sabrina</span></span>
+      </div>
+      <p class="deliver">Lock the shape of a unit of labor and a unit of material used, so production reliably generates the contribution records the credit system needs.</p>
+      <div class="schema-lead"><b>Proposed schemas, for context</b> — the data contracts this workstream would lock in. Tap a contract to expand it, then switch plain-language ⇄ JSON. These are the same shapes the walkthrough builds in action.</div>
+      <div class="schema-mount" data-mod="cos"></div>
+      <a class="walk" href="https://tairea.github.io/integral-phase-1/COS-Start-Here/" target="_blank" rel="noopener">
+        <span class="walk-ic">▶</span><span><span class="wt">Walk through the COS</span><small>See the footbridge actually get built, work and materials recorded</small></span><span class="arr">↗</span>
+      </a>
+      <div class="focus-label">Question this team owns</div>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-09</span><span class="q">Record where materials came from — in detail</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">Store the detailed source of materials (recycled / brought in from outside / used in production / scrapped), and derive the simpler version whenever a connecting system needs it.</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">No information is lost, and the feedback system gets recycling and waste signals "for free" — useful for ecological awareness.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> store the richer 4-way source value, derive the coarse 2-way value for the credit contract. <br><span class="weigh">Worth weighing:</span> <span class="alt">are four categories enough, or will some nodes need finer detail later (e.g. repair vs reuse)?</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><span class="src-text">White Paper — COS material flow</span></div></div>
+        </div>
+      </details>
+      <p class="also"><b>Also weighs in on:</b> OPEN-QUESTION-03 and OPEN-QUESTION-08 (owned by ITC) — because production records feed the credit system.</p>
+    </div>
+
+    <!-- W5 FRS -->
+    <div class="ws reveal">
+      <div class="ws-top"><span class="ws-id">WORKSTREAM-5 · FRS — FEEDBACK</span><span class="sev">the "advises, never decides" system</span></div>
+      <h3>How the system spots problems &amp; advises</h3>
+      <div class="team-row">
+        <span class="pill is-lead" tabindex="0" data-tip="Alex (Lefseladden) — his own work is resource &amp; environmental monitoring and feedback interfacing with production, which is exactly what FRS does — a natural fit to lead it."><span class="av">AX</span><span><span class="lead-tag">Lead</span> <span class="who">Alex</span></span></span>
+        <span class="pill" tabindex="0" data-tip="David — modeling &amp; simulation background (MBSE / SysML); well suited to the signal, finding and recommendation structures (also leads OAD)."><span class="av">DV</span><span class="who">David</span></span>
+        <span class="pill" tabindex="0" data-tip="Vitali — volunteered specifically to raise safety-critical concerns; the 'feedback never decides' boundary is exactly that kind of safeguard."><span class="av">VI</span><span class="who">Vitali</span></span>
+      </div>
+      <p class="deliver">Lock the shape of a signal, a finding, and a recommendation — and make sure the feedback system can <b>flag</b> things but never <b>act</b> on them itself.</p>
+      <div class="schema-lead"><b>Proposed schemas, for context</b> — the data contracts this workstream would lock in. Tap a contract to expand it, then switch plain-language ⇄ JSON. These are the same shapes the walkthrough builds in action.</div>
+      <div class="schema-mount" data-mod="frs"></div>
+      <a class="walk" href="https://tairea.github.io/integral-phase-1/FRS-Start-Here/" target="_blank" rel="noopener">
+        <span class="walk-ic">▶</span><span><span class="wt">Walk through the FRS</span><small>Watch operational signals become a finding fed back to governance</small></span><span class="arr">↗</span>
+      </a>
+      <div class="focus-label">Questions this team owns</div>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-11</span><span class="q">The feedback system advises — it must never decide</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">The feedback system flags issues and recommends fixes — but it must be <b>structurally impossible</b> for it to approve its own recommendation.</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">Prevents "shadow governance" — a monitoring system quietly becoming the decision-maker. The White Paper calls this boundary structural, not just a rule people are asked to follow.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> make the "accepted" status writable only by the target system or the community — never by the feedback system — enforced in the software, not just by convention. <br><span class="weigh">Worth weighing:</span> <span class="alt">exactly where that lock is enforced, and how we test that the feedback system truly cannot write "accepted."</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><span class="src-text">White Paper §2.1 (advisory-only guarantee)</span></div></div>
+        </div>
+      </details>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-16</span><span class="q">Two kinds of "scope" that look the same but aren't</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">"How far a problem reaches" and "who has the authority to act on it" are genuinely different things.</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">Gets escalation right once co-ops and multi-community networks exist — a node-wide problem can still be handled at co-op level if it's contained there.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> keep them as two clearly-labelled ideas with a defined map between them. <br><span class="weigh">Worth weighing:</span> <span class="alt">a single unified scale removes the map, but blurs "reach" and "authority," which really do differ.</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><span class="src-text">White Paper — FRS scope; Ep.59</span></div></div>
+        </div>
+      </details>
+      <p class="also"><b>Also weighs in on:</b> OPEN-QUESTION-05 (with OAD) and OPEN-QUESTION-07 (with ITC).</p>
+    </div>
+
+    <!-- W6 Network -->
+    <div class="ws cross reveal">
+      <div class="ws-top"><span class="ws-id">WORKSTREAM-6 · NETWORK CHECK</span><span class="sev x">cross-checks all five</span></div>
+      <h3>Ready for many communities, from day one</h3>
+      <div class="team-row">
+        <span class="pill is-lead" tabindex="0" data-tip="Lukas Orsvärn — wrote decentralized peer-to-peer contracts for Freenet; ideal for the cross-community / federation readiness sweep."><span class="av">LO</span><span><span class="lead-tag">Lead</span> <span class="who">Lukas Orsvärn</span></span></span>
+        <span class="pill" tabindex="0" data-tip="Kees — master's in network &amp; security design; HPC, Kubernetes and security operations make him a natural distributed-systems reviewer."><span class="av">KS</span><span class="who">Kees</span></span>
+        <span class="pill" tabindex="0" data-tip="Jason (mistercohaagen) — years of mesh-network, Linux and distributed-infra experience; a natural fit for checking the schema can span many nodes."><span class="av">JS</span><span class="who">Jason</span></span>
+      </div>
+      <p class="deliver">Sweep across all five systems to confirm every record is built so communities can connect later — each record knows which community it belongs to, and the fields needed to link communities exist now (empty until used). The Dev Guide asks for this from day one because adding it later means rewriting permanent records.</p>
+      <details class="dg" style="margin-bottom:6px"><summary>📖 Why "from day one" — the Dev Guide on federation fields <span class="plus">+</span></summary>
+        <blockquote><p>"The system is designed to eventually operate across multiple independent nodes. Every participant ID should be structured as <span class="mono">node-id:participant-id</span>… Building these fields in now — even though they will mostly be null in the early build — is the difference between a federation migration that takes days and one that takes months and corrupts historical records."</p></blockquote>
+        <div class="cite">Dev Guide §4.1 · <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#41-why-data-architecture-comes-first" target="_blank" rel="noopener">view on GitHub ↗</a></div>
+      </details>
+      <p class="also"><b>Reviews:</b> OPEN-QUESTION-06 and OPEN-QUESTION-13 (with CDS) and OPEN-QUESTION-16 (with FRS) — the questions that decide how communities and co-ops connect.</p>
+    </div>
+
+    <!-- W7 Safety -->
+    <div class="ws cross reveal">
+      <div class="ws-top"><span class="ws-id">WORKSTREAM-7 · SAFETY CHECK</span><span class="sev x">cross-checks before ratifying</span></div>
+      <h3>Try to break it before we commit</h3>
+      <div class="team-row">
+        <span class="pill is-lead" tabindex="0" data-tip="Vitali — joined with the explicit mission of raising safety-critical concerns and flagging weak solutions; this is precisely that role."><span class="av">VI</span><span><span class="lead-tag">Lead</span> <span class="who">Vitali</span></span></span>
+        <span class="pill" tabindex="0" data-tip="Kees — security operations (threat hunting, incident response) makes him strong on access-control and failure-mode review."><span class="av">KS</span><span class="who">Kees</span></span>
+      </div>
+      <p class="deliver">A deliberate "what could go wrong?" pass over the whole schema: places a value could silently end up wrong, rules that aren't actually enforced, and the boundaries that protect the system's integrity. This is the last check before ratification.</p>
+      <p class="also"><b>Stress-tests:</b> the credit-fade rule (OPEN-QUESTION-04), the frozen-record rule (OPEN-QUESTION-03), the "feedback never decides" lock (OPEN-QUESTION-11), and the shared seriousness scale (OPEN-QUESTION-07).</p>
+    </div>
+
+    <!-- W8 Ratify -->
+    <div class="ws reveal">
+      <div class="ws-top"><span class="ws-id">WORKSTREAM-8 · RATIFY → PHASE 2 OPENS</span><span class="sev">the finish line</span></div>
+      <h3>Decide together, write it down, begin building</h3>
+      <div class="team-row">
+        <span class="pill is-lead" tabindex="0" data-tip="Ian — coordinating the Phase 1 exercise and driving it through to ratification."><span class="av">IN</span><span><span class="lead-tag">Lead</span> <span class="who">Ian</span></span></span>
+        <span class="pill" tabindex="0" data-tip="Filipe Beck — owns the decision-record pipeline (build_and_validate) that turns each settled question into a DR record."><span class="av">FB</span><span class="who">Filipe Beck</span></span>
+        <span class="pill" tabindex="0" data-tip="Władymór — enjoys documentation and has organising experience; helps turn settled questions into clean decision records."><span class="av">WD</span><span class="who">Władymór</span></span>
+        <span class="pill" tabindex="0" data-tip="Alexander (SinCuri0) — trained mediator with communication-framework experience; ideal for facilitating the ratification session itself."><span class="av">AL</span><span class="who">Alexander</span></span>
+        <span class="pill" tabindex="0" data-tip="Jeremy (Nattyswede) — coaching and community-development background; keeps the decision session coherent and humane."><span class="av">JR</span><span class="who">Jeremy</span></span>
+      </div>
+      <p class="deliver">Run the shared session on the cross-cutting questions, then turn each settled question into a written <b>decision record</b> — using the very governance schema this exercise defines. When the two 🔴 questions are closed, Phase 2 — building the working system — officially begins.</p>
+      <div class="focus-label">Question this team owns</div>
+      <details class="oq"><summary><span class="code">OPEN-QUESTION-10</span><span class="q">What about the parts we haven't fully formalized yet?</span><span class="plus">+</span></summary>
+        <div class="oq-body">
+          <div class="row"><div class="k plain">In plain terms</div><div class="v">This first pass fully formalizes only the records that pass <b>between</b> systems (about 15 of roughly 80). What about the internal-only ones?</div></div>
+          <div class="row"><div class="k why">Why it matters</div><div class="v">Honesty about coverage. Everyone can see what's done and what's still coming, so there are no hidden gaps that surprise us later.</div></div>
+          <div class="row"><div class="k dir">Directions on the table</div><div class="v"><span class="prop">Proposed:</span> each team formalizes its internal-only records as that part of the system matures, checked against the shared lists ratified now — openly tracked, never quietly dropped. <br><span class="weigh">Worth weighing:</span> <span class="alt">who decides when a deferred record is "mature enough" to formalize, so it doesn't slip indefinitely?</span></div></div>
+          <div class="row"><div class="k src">Source</div><div class="v"><span class="src-text">This exercise — open-questions register</span></div></div>
+        </div>
+      </details>
+    </div>
+
+  </div>
+</section>
+
+<!-- ROSTER -->
+<section>
+  <div class="wrap">
+    <div class="sec-tag">// The roster at a glance</div>
+    <h2>Who's on <span class="accent">which team</span></h2>
+    <div class="team">
+      <div class="member reveal"><div class="m-av" style="background:rgba(242,177,52,.16);color:#ffd277;border:1px solid rgba(242,177,52,.3)">LF</div><div class="m-info"><div class="m-name">Lynn Foster</div><div class="m-role">ValueFlows ontology maintainer · modelling</div></div><div class="m-ws">W2 · W3 · W4</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(242,177,52,.16);color:#ffd277;border:1px solid rgba(242,177,52,.3)">LE</div><div class="m-info"><div class="m-name">Leanne</div><div class="m-role">Credits lead · monetary theorist (PhD)</div></div><div class="m-ws">W2 · W1</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(242,177,52,.16);color:#ffd277;border:1px solid rgba(242,177,52,.3)">FB</div><div class="m-info"><div class="m-name">Filipe Beck</div><div class="m-role">Decisions lead · already building CDS</div></div><div class="m-ws">W1 · W0 · W8</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(242,177,52,.16);color:#ffd277;border:1px solid rgba(242,177,52,.3)">DV</div><div class="m-info"><div class="m-name">David</div><div class="m-role">Designs lead · MBSE / SysML</div></div><div class="m-ws">W3 · W5</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(242,177,52,.16);color:#ffd277;border:1px solid rgba(242,177,52,.3)">BN</div><div class="m-info"><div class="m-name">Ben</div><div class="m-role">Permanent-record rigor · full-stack</div></div><div class="m-ws">W0 · W2 · W4</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(242,177,52,.16);color:#ffd277;border:1px solid rgba(242,177,52,.3)">MB</div><div class="m-info"><div class="m-name">Marcus Barrick</div><div class="m-role">Production lead · systems engineer</div></div><div class="m-ws">W4 · W3</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(242,177,52,.16);color:#ffd277;border:1px solid rgba(242,177,52,.3)">FE</div><div class="m-info"><div class="m-name">Federico</div><div class="m-role">Shared-format · data modeling</div></div><div class="m-ws">W0</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(242,177,52,.16);color:#ffd277;border:1px solid rgba(242,177,52,.3)">VT</div><div class="m-info"><div class="m-name">Verta</div><div class="m-role">Labor-time accounting · co-op networks</div></div><div class="m-ws">W2</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(242,177,52,.16);color:#ffd277;border:1px solid rgba(242,177,52,.3)">PJ</div><div class="m-info"><div class="m-name">Peter Joseph</div><div class="m-role">Vision &amp; credit-principle authority</div></div><div class="m-ws">W2</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(92,214,198,.14);color:#5cd6c6;border:1px solid rgba(92,214,198,.3)">LO</div><div class="m-info"><div class="m-name">Lukas Orsvärn</div><div class="m-role">Network-readiness lead · peer-to-peer</div></div><div class="m-ws">W6</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(92,214,198,.14);color:#5cd6c6;border:1px solid rgba(92,214,198,.3)">KS</div><div class="m-info"><div class="m-name">Kees</div><div class="m-role">Distributed systems &amp; security</div></div><div class="m-ws">W6 · W7</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(255,111,111,.13);color:#ff6f6f;border:1px solid rgba(255,111,111,.3)">VI</div><div class="m-info"><div class="m-name">Vitali</div><div class="m-role">Safety-critical reviewer</div></div><div class="m-ws">W7 · W5</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(148,160,150,.13);color:#cdd4cc;border:1px solid rgba(148,160,150,.3)">SW</div><div class="m-info"><div class="m-name">Sam</div><div class="m-role">Governance advisor · timebanks</div></div><div class="m-ws">W1</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(148,160,150,.13);color:#cdd4cc;border:1px solid rgba(148,160,150,.3)">RG</div><div class="m-info"><div class="m-name">Régis</div><div class="m-role">CDS support · dashboards later</div></div><div class="m-ws">W1</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(148,160,150,.13);color:#cdd4cc;border:1px solid rgba(148,160,150,.3)">IN</div><div class="m-info"><div class="m-name">Ian</div><div class="m-role">Coordinator · Ground Rules &amp; Ratify lead</div></div><div class="m-ws">W0 · W8</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(148,160,150,.13);color:#cdd4cc;border:1px solid rgba(148,160,150,.3)">MI</div><div class="m-info"><div class="m-name">Michael</div><div class="m-role">Tech support · simplifier</div></div><div class="m-ws">W0</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(148,160,150,.13);color:#cdd4cc;border:1px solid rgba(148,160,150,.3)">MV</div><div class="m-info"><div class="m-name">Maveritori</div><div class="m-role">Org systems · cybernetics</div></div><div class="m-ws">W1</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(148,160,150,.13);color:#cdd4cc;border:1px solid rgba(148,160,150,.3)">SF</div><div class="m-info"><div class="m-name">Serf</div><div class="m-role">Transition mgmt · commons</div></div><div class="m-ws">W1</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(148,160,150,.13);color:#cdd4cc;border:1px solid rgba(148,160,150,.3)">VC</div><div class="m-info"><div class="m-name">Vicente</div><div class="m-role">Mechanical engineer</div></div><div class="m-ws">W3</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(148,160,150,.13);color:#cdd4cc;border:1px solid rgba(148,160,150,.3)">JP</div><div class="m-info"><div class="m-name">Jean-Philippe</div><div class="m-role">Maker · tool-library node</div></div><div class="m-ws">W4</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(148,160,150,.13);color:#cdd4cc;border:1px solid rgba(148,160,150,.3)">SB</div><div class="m-info"><div class="m-name">Sabrina</div><div class="m-role">Environmental science · resources</div></div><div class="m-ws">W4</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(148,160,150,.13);color:#cdd4cc;border:1px solid rgba(148,160,150,.3)">AX</div><div class="m-info"><div class="m-name">Alex</div><div class="m-role">Feedback lead · env. monitoring</div></div><div class="m-ws">W5</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(92,214,198,.14);color:#5cd6c6;border:1px solid rgba(92,214,198,.3)">JS</div><div class="m-info"><div class="m-name">Jason</div><div class="m-role">Mesh networks · sysadmin</div></div><div class="m-ws">W6</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(148,160,150,.13);color:#cdd4cc;border:1px solid rgba(148,160,150,.3)">WD</div><div class="m-info"><div class="m-name">Władymór</div><div class="m-role">Organising · documentation</div></div><div class="m-ws">W8</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(148,160,150,.13);color:#cdd4cc;border:1px solid rgba(148,160,150,.3)">AL</div><div class="m-info"><div class="m-name">Alexander</div><div class="m-role">Mediator · game dev</div></div><div class="m-ws">W8</div></div>
+      <div class="member reveal"><div class="m-av" style="background:rgba(148,160,150,.13);color:#cdd4cc;border:1px solid rgba(148,160,150,.3)">JR</div><div class="m-info"><div class="m-name">Jeremy</div><div class="m-role">Coaching · community dev</div></div><div class="m-ws">W8</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p class="note">
+      <b>This is a proposal, not a decree.</b> Team assignments and proposed directions are a starting point for the working groups to deliberate and change.<br><br>
+      <b>Primary source:</b> <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">Integral Dev Guide — DEVGUIDE.md ↗</a> &nbsp;·&nbsp; the schema design exercise is §5.1, the data contracts §4.<br>
+      <b>The candidate &amp; walkthroughs:</b> <a href="https://tairea.github.io/integral-phase-1/" target="_blank" rel="noopener">tairea.github.io/integral-phase-1 ↗</a> &nbsp;·&nbsp; <a href="https://github.com/tairea/integral-phase-1" target="_blank" rel="noopener">source repo ↗</a><br>
+      <b>The gate:</b> Phase 2 begins once OPEN-QUESTION-01 and OPEN-QUESTION-04 are closed and each settled question is written up as a decision record.
+    </p>
+  </div>
+</footer>
+
+<script>
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:0.1});
+  document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=(i%3*60)+'ms';io.observe(el)});
+
+const SD={"cds": [{"type": "Submission", "tier": "ratified", "fields": [{"fn": "submission_id", "ty": "string", "t": ["WP"], "note": "unique id for this one input"}, {"fn": "author_id", "ty": "string", "t": ["FED"], "note": "node-id:person-id — who submitted it (globally unique)"}, {"fn": "type", "ty": "enum", "t": ["WP"], "note": "concern | proposal | objection | evidence | comment | signal"}, {"fn": "content", "ty": "string", "t": ["WP"], "note": "what they actually wrote"}, {"fn": "duplicate_of", "ty": "string|null", "t": ["DG"], "note": "if a near-duplicate, points to the canonical one (kept, not deleted)"}, {"fn": "embedding", "ty": "array|null", "t": ["DG", "DEFERRED"], "note": "reserved — the numeric 'meaning' used to spot duplicates"}], "json": ""}, {"type": "Issue", "tier": "ratified", "fields": [{"fn": "issue_id", "ty": "string", "t": ["WP"], "note": "unique id for this whole decision"}, {"fn": "node_id", "ty": "string", "t": ["FED"], "note": "which node — here, Stillwater; federation-aware from day one"}, {"fn": "governance_scope", "ty": "enum", "t": ["DG"], "note": "coop | node | network — which level owns this"}, {"fn": "status", "ty": "enum", "t": ["WP"], "note": "starts at \"intake\" — this field advances every module →"}, {"fn": "submission_ids", "ty": "array", "t": ["WP"], "note": "links to every submission (incl. duplicates)"}, {"fn": "federation_hash", "ty": "string|null", "t": ["FED", "DEFERRED"], "note": "reserved (null) until nodes connect"}], "json": "{\n  \"issue_id\": \"stillwater:ISS-001\",\n  \"node_id\": \"stillwater\",\n  \"governance_scope\": \"node\",\n  \"status\": \"intake\",\n  \"title\": \"The footbridge to the vertical farm floods during storms\",\n  \"submission_ids\": [\"stillwater:SUB-001\", \"... ×8\"],\n  \"federation_hash\": null\n}"}, {"type": "StructuredIssueView", "tier": "proposed", "fields": [{"fn": "issue_id", "ty": "string", "t": ["WP"], "note": "the Issue this view belongs to"}, {"fn": "clusters", "ty": "array", "t": ["WP"], "note": "groups of submission_ids by theme (traceable back to M1)"}, {"fn": "themes", "ty": "array", "t": ["WP"], "note": "the topic labels found: resilience, ecology, heritage, equity, cost"}, {"fn": "metadata", "ty": "object", "t": ["WP"], "note": "how the grouping was produced (transparency)"}], "json": "{\n  \"issue_id\": \"stillwater:ISS-001\",\n  \"themes\": [\"resilience\", \"ecology\", \"heritage\", \"equity\", \"cost\"],\n  \"clusters\": [\n    {\"label\": \"heritage\", \"submission_ids\": [\"stillwater:SUB-004\"]},\n    {\"label\": \"equity\",   \"submission_ids\": [\"stillwater:SUB-003\"]}\n  ]\n}"}, {"type": "ContextModel", "tier": "proposed", "fields": [{"fn": "issue_id", "ty": "string", "t": ["WP"], "note": "the Issue"}, {"fn": "historical", "ty": "string", "t": ["WP"], "note": "e.g. built 1966, 3 flood closures this season"}, {"fn": "ecological", "ty": "string", "t": ["WP"], "note": "salmon-bearing creek; in-stream works constrained"}, {"fn": "labor", "ty": "string", "t": ["WP"], "note": "~140 skilled labor-hours available this window"}, {"fn": "dependencies", "ty": "string", "t": ["WP"], "note": "farm + transport co-ops rely on this crossing"}, {"fn": "evidence_index", "ty": "array", "t": ["WP"], "note": "links to logs, inspection reports, maps"}], "json": "{\n  \"issue_id\": \"stillwater:ISS-001\",\n  \"historical\": \"Bridge built 1966; 3 flood closures already this season.\",\n  \"ecological\": \"Mill Creek is salmon-bearing; in-stream works constrained.\",\n  \"labor\": \"~140 skilled labor-hours available next window.\",\n  \"evidence_index\": [\"flood-log-2026.csv\", \"bridge-inspection-2024.pdf\"]\n}"}, {"type": "Scenario", "tier": "proposed", "fields": [{"fn": "scenario_id", "ty": "string", "t": ["WP"], "note": "id for this option"}, {"fn": "label", "ty": "string", "t": ["WP"], "note": "e.g. \"Raise & reinforce the existing bridge\""}, {"fn": "indicators", "ty": "object", "t": ["WP", "DEFERRED"], "note": "its impact on each dimension (ecology, equity, …)"}, {"fn": "origin", "ty": "enum", "t": ["DG"], "note": "submission | auto_generated | deliberation — where it came from"}, {"fn": "parent_scenario_id", "ty": "string|null", "t": ["DG"], "note": "reserved — set if this is a revised version of another"}, {"fn": "revision_count", "ty": "integer", "t": ["DG"], "note": "0 now — increases if the option is refined later"}], "json": "Scenario P1: {\"scenario_id\":\"stillwater:P1\",\"origin\":\"submission\",\"revision_count\":0, ...}\nScenario P3: {\"origin\":\"auto_generated\", ...}        // the auto-generation step made this one\n\nConstraintReport for P2: {\n  \"passed\": false,\n  \"violations\": [{\"constraint\":\"ecological_budget\",\"value\":-0.6,\"threshold\":-0.5}]\n}\nConstraintReport for P3: {\"passed\": false, \"violations\":[{\"constraint\":\"accessibility_floor\", ...}]}"}, {"type": "Objection", "tier": "proposed", "fields": [{"fn": "participant_id", "ty": "string", "t": ["WP"], "note": "node-id:person-id — who objects"}, {"fn": "scenario_id", "ty": "string", "t": ["WP"], "note": "which option"}, {"fn": "severity", "ty": "number", "t": ["WP"], "note": "0–1: how serious the harm"}, {"fn": "scope", "ty": "number", "t": ["WP"], "note": "0–1: how broadly it applies"}, {"fn": "description", "ty": "string", "t": ["WP"], "note": "the reasoning, in the person's own voice"}], "json": "Vote (Maya on P1): {\"support\":\"strong_support\",\"comment\":\"Raising it in place is the durable fix...\"}\n\nObjection (Beatrice on P2): {\n  \"participant_id\": \"stillwater:beatrice\",\n  \"severity\": 0.94, \"scope\": 0.6,          // → \"objection index\" = 0.94 × 0.6 = 0.56\n  \"description\": \"Demolishing the original bridge removes a communal landmark...\"\n}"}, {"type": "ConsensusResult", "tier": "proposed", "fields": [{"fn": "scenario_id", "ty": "string", "t": ["WP"], "note": "which option"}, {"fn": "consensus_score", "ty": "number", "t": ["WP"], "note": "weighted average of preferences (−1…+1)"}, {"fn": "objection_index", "ty": "number", "t": ["WP"], "note": "max(severity × scope) across its objections"}, {"fn": "directive", "ty": "enum", "t": ["WP"], "note": "approve | revise | escalate_to_module9"}, {"fn": "escalation_reason", "ty": "string|null", "t": ["DG"], "note": "set only if escalated (value conflict / revision failure)"}], "json": "Thresholds (set by node governance): consensus ≥ 0.72, block < 0.30\nsupport gradient: strong_support=1.0, support=0.6, neutral=0.0, concern=-0.4, block=-1.0\n\nP1: consensus +0.92, objection 0.00 → approve   ✅  (orchestrator selects it)\nP2: consensus -0.36, objection 0.56 → revise     (blocked by Beatrice's objection)\nP3: consensus -0.32, objection 0.42 → revise\nP4: consensus +0.48, objection 0.00 → revise     (not enough support)"}, {"type": "DecisionRecord", "tier": "ratified", "fields": [{"fn": "decision_id", "ty": "string", "t": ["WP"], "note": "the permanent decision id"}, {"fn": "scenario_id", "ty": "string", "t": ["WP"], "note": "the winning option (P1)"}, {"fn": "consensus_results", "ty": "array", "t": ["DG"], "note": "every option's result — winners AND losers kept for transparency"}, {"fn": "rationale_hash", "ty": "string", "t": ["WP"], "note": "hash of the reasoning (tamper-evidence)"}, {"fn": "prev_hash", "ty": "string", "t": ["DG", "DEFERRED"], "note": "\"GENESIS\" here — chains records into a ledger"}, {"fn": "review_triggers", "ty": "array", "t": ["WP", "DEFERRED"], "note": "conditions that could reopen this later (M10)"}], "json": "{\n  \"decision_id\": \"stillwater:DR-001\",\n  \"scenario_id\": \"stillwater:P1\",\n  \"status\": \"approved\",\n  \"consensus_score\": 0.92,\n  \"considered_scenario_ids\": [\"stillwater:P1\",\"P2\",\"P3\",\"P4\"],   // losers kept too\n  \"rationale_hash\": \"sha256:dfcd46f168463...\",\n  \"prev_hash\": \"GENESIS\"\n}\n// ↻ Issue.status: \"consensus_check\" → \"decided\"  (same object, mutated across the pipeline)"}, {"type": "DispatchPacket", "tier": "ratified", "fields": [{"fn": "decision_id", "ty": "string", "t": ["WP"], "note": "the decision being implemented"}, {"fn": "target_systems", "ty": "array", "t": ["DG"], "note": "OAD, COS, FRS — who must act"}, {"fn": "oad_flags", "ty": "object", "t": ["WP"], "note": "design instructions for OAD"}, {"fn": "tasks", "ty": "array", "t": ["WP"], "note": "production directives for COS"}, {"fn": "frs_monitors", "ty": "array", "t": ["WP"], "note": "what FRS should watch → closes the loop"}], "json": "{\n  \"packet_id\": \"stillwater:DSP-001\",\n  \"decision_id\": \"stillwater:DR-001\",\n  \"target_systems\": [\"OAD\", \"COS\", \"FRS\"],\n  \"oad_flags\": {\"design_task\": \"Detailed design for: Raise & reinforce the existing bridge\"},\n  \"frs_monitors\": [\"flood-closure-rate\", \"farm-access-continuity\"]\n}"}], "itc": [{"type": "LaborEvent", "tier": "ratified", "fields": [{"fn": "event_id", "ty": "string", "t": ["WP"], "note": "unique id for this logged task"}, {"fn": "participant_id", "ty": "string", "t": ["FED"], "note": "node-id:person-id — who did the work"}, {"fn": "coop_id", "ty": "string", "t": ["WP"], "note": "the co-op the labor happened in (build crew)"}, {"fn": "task_ref", "ty": "string", "t": ["WP"], "note": "ref to the COS Task being executed"}, {"fn": "hours", "ty": "number", "t": ["WP"], "note": "RAW hours as reported — value-neutral"}, {"fn": "skill_tier", "ty": "enum", "t": ["WP"], "note": "SkillTier — shared enum (e.g. welding = skilled)"}, {"fn": "context", "ty": "object", "t": ["WP"], "note": "weighting signals {urgency_score, eco_sensitive, scarcity_factor} — Module 2's input"}, {"fn": "verification_status", "ty": "enum", "t": ["DG"], "note": "pending | verified | disputed — only verified work counts"}, {"fn": "verified_by", "ty": "array", "t": ["WP"], "note": "who confirmed it (Maya peer-verified the weld)"}, {"fn": "itc_weight_multiplier", "ty": "number|null", "t": ["WP"], "note": "WEIGHTED-OUTPUT field — empty until Module 2 (the preserved boundary)"}, {"fn": "itc_weighted_hours", "ty": "number|null", "t": ["WP"], "note": "hours × multiplier — empty until Module 2"}, {"fn": "itc_credits_issued", "ty": "number|null", "t": ["WP"], "note": "credits generated — empty until Module 2"}], "json": "{\n  \"event_id\": \"stillwater:LE-014\",\n  \"participant_id\": \"stillwater:sam\",\n  \"coop_id\": \"stillwater:bridge-crew\",\n  \"task_ref\": \"stillwater:TASK-welding-reinforcement\",\n  \"hours\": 6.0,\n  \"skill_tier\": \"skilled\",\n  \"context\": { \"urgency_score\": 0.7, \"eco_sensitive\": true, \"scarcity_factor\": 0.3 },\n  \"verification_status\": \"verified\",\n  \"verified_by\": [\"stillwater:maya\"],\n  \"itc_weight_multiplier\": null,   // <-- weighting outputs still EMPTY\n  \"itc_weighted_hours\": null,      //     raw vs. weighted boundary, visible\n  \"itc_credits_issued\": null\n}"}, {"type": "ITCLedgerEntry", "tier": "ratified", "fields": [{"fn": "entry_id", "ty": "string", "t": ["WP"], "note": "unique id for this ledger line"}, {"fn": "entry_type", "ty": "enum", "t": ["WP"], "note": "LedgerEntryType — starts at \"labor_event_recorded\"; this field advances every step →"}, {"fn": "raw_hours", "ty": "number|null", "t": ["WP"], "note": "unweighted hours — labor entries only"}, {"fn": "weighted_credits", "ty": "number|null", "t": ["WP"], "note": "post-weighting credits — null until M2"}, {"fn": "amount", "ty": "number", "t": ["WP"], "note": "net credit change (0 here — no credits issued yet)"}, {"fn": "balance_after", "ty": "number", "t": ["WP"], "note": "balance snapshot after this entry"}, {"fn": "related_ids", "ty": "object", "t": ["WP"], "note": "links {event_id, account_id} for traceability"}], "json": "{\n  \"entry_id\": \"stillwater:LED-101\",\n  \"timestamp\": \"2026-05-04T16:20:00Z\",\n  \"participant_id\": \"stillwater:sam\",\n  \"node_id\": \"stillwater\",\n  \"governance_scope\": \"coop\",\n  \"coop_id\": \"stillwater:bridge-crew\",\n  \"entry_type\": \"labor_event_recorded\",\n  \"amount\": 0,\n  \"raw_hours\": 6.0,\n  \"weighted_credits\": null,\n  \"balance_after\": 0,\n  \"related_ids\": { \"event_id\": \"stillwater:LE-014\", \"account_id\": \"stillwater:ACC-sam\" }\n}"}, {"type": "WeightingPolicy", "tier": "proposed", "fields": [{"fn": "policy_id", "ty": "string", "t": ["WP"], "note": "which weighting policy snapshot was applied"}, {"fn": "base_weights", "ty": "object", "t": ["WP"], "note": "base multiplier by SkillTier (e.g. routine 1.0, skilled 1.8 for welding)"}, {"fn": "context_weights", "ty": "object", "t": ["WP"], "note": "bumps for urgency, ecological sensitivity, scarcity"}, {"fn": "multiplier_min", "ty": "number", "t": ["WP"], "note": "hard floor on the final multiplier (e.g. 0.5)"}, {"fn": "multiplier_max", "ty": "number", "t": ["WP"], "note": "hard ceiling on the final multiplier (e.g. 2.0)"}], "json": ""}, {"type": "ITCAccount", "tier": "ratified", "fields": [{"fn": "account_id", "ty": "string", "t": ["WP"], "note": "Sam's single, node-level account"}, {"fn": "balance", "ty": "number", "t": ["WP"], "note": "current balance (after this decay tick)"}, {"fn": "total_earned", "ty": "number", "t": ["WP"], "note": "lifetime credits issued"}, {"fn": "total_decayed", "ty": "number", "t": ["WP"], "note": "lifetime lost to decay — rises now"}, {"fn": "total_redeemed", "ty": "number", "t": ["WP"], "note": "lifetime extinguished via access (still 0)"}, {"fn": "active_decay_rule_id", "ty": "string", "t": ["WP"], "note": "ref to the CDS-ratified DecayRule in effect"}, {"fn": "decay_snapshot", "ty": "object", "t": ["WP"], "note": "read-through copy of the DecayRule params (kept in sync, never authored here)"}, {"fn": "transferable", "ty": "const false", "t": ["WP"], "note": "ALWAYS false — architectural constraint, never a toggle"}, {"fn": "federation_scope", "ty": "enum", "t": ["FED"], "note": "local for now — cross-node recognition is deferred"}], "json": "{\n  \"account_id\": \"stillwater:ACC-sam\",\n  \"participant_id\": \"stillwater:sam\",\n  \"node_id\": \"stillwater\",\n  \"balance\": 14.90,             // decayed from 16.22 after the grace window\n  \"total_earned\": 16.22,\n  \"total_decayed\": 1.32,\n  \"total_redeemed\": 0,\n  \"active_decay_rule_id\": \"stillwater:DECAY-std-2026\",\n  \"decay_snapshot\": {\n    \"decay_half_life_days\": 180,\n    \"decay_inactivity_grace_days\": 30,\n    \"decay_min_balance_protected\": 5.0,\n    \"decay_max_annual_fraction\": 0.40\n  },\n  \"transferable\": false,        // <-- can NEVER be true\n  \"federation_scope\": \"local\",\n  \"last_decay_applied_at\": \"2026-06-15T00:00:00Z\"\n}"}, {"type": "LaborDemandForecast", "tier": "proposed", "fields": [{"fn": "forecast_id", "ty": "string", "t": ["WP"], "note": "id for this forecast snapshot"}, {"fn": "horizon_days", "ty": "integer", "t": ["WP"], "note": "how far ahead it looks (e.g. 60)"}, {"fn": "skill_demand", "ty": "object", "t": ["WP"], "note": "projected hours needed per SkillTier"}, {"fn": "drivers", "ty": "array", "t": ["WP"], "note": "why: COS cycles, OAD updates, ecological/seasonal constraints"}, {"fn": "suggested_weight_adjustments", "ty": "object", "t": ["WP", "DEFERRED"], "note": "non-binding hints to M2 — never compels participation"}], "json": "{\n  \"forecast_id\": \"stillwater:FCAST-2026-06\",\n  \"horizon_days\": 60,\n  \"skill_demand\": { \"skilled\": 220, \"routine\": 95 },   // projected hours\n  \"drivers\": [\"flood-season\", \"farm-logistics-surge\", \"bridge-maintenance-cycle\"],\n  \"suggested_weight_adjustments\": { \"skilled.welding\": \"+0.05\" },   // a HINT, not a command\n  \"compels_participation\": false\n}"}, {"type": "AccessValuation", "tier": "proposed", "fields": [{"fn": "item_id", "ty": "string", "t": ["WP"], "note": "the good being valued (the tool kit)"}, {"fn": "design_version_id", "ty": "string", "t": ["WP"], "note": "the OAD CertifiedDesign + version the value is built from"}, {"fn": "base_weighted_labor_hours", "ty": "number", "t": ["WP"], "note": "labor backbone, from OAD/COS decomposition"}, {"fn": "eco_burden_adjustment", "ty": "number", "t": ["WP"], "note": "hours-equivalent added for ecological burden"}, {"fn": "material_scarcity_adjustment", "ty": "number", "t": ["WP"], "note": "hours-equivalent added for scarce materials"}, {"fn": "repairability_credit", "ty": "number", "t": ["WP"], "note": "NEGATIVE — lowers the cost of repairable goods"}, {"fn": "longevity_credit", "ty": "number", "t": ["WP"], "note": "NEGATIVE — rewards durable, long-lived designs"}, {"fn": "final_itc_cost", "ty": "number", "t": ["WP"], "note": "the final obligation in ITC (fairness-bounded by CDS)"}, {"fn": "policy_snapshot_id", "ty": "string", "t": ["WP"], "note": "which CDS policy governed this valuation"}], "json": "{\n  \"item_id\": \"stillwater:ITEM-toolkit-rev2\",\n  \"design_version_id\": \"stillwater:OAD-toolkit-v2\",\n  \"base_weighted_labor_hours\": 9.40,\n  \"eco_burden_adjustment\": 1.60,\n  \"material_scarcity_adjustment\": 0.30,\n  \"repairability_credit\": -1.20,    // negative: repairable goods cost LESS\n  \"longevity_credit\": -0.90,\n  \"final_itc_cost\": 9.20,           // bounded by CDS fairness policy\n  \"policy_snapshot_id\": \"stillwater:ACCPOL-2026Q2\"\n}"}, {"type": "RedemptionRecord", "tier": "proposed", "fields": [{"fn": "redemption_id", "ty": "string", "t": ["WP"], "note": "id for this access event"}, {"fn": "participant_id", "ty": "string", "t": ["WP"], "note": "node-id:person-id — Sam"}, {"fn": "item_id", "ty": "string", "t": ["WP"], "note": "the good acquired"}, {"fn": "itc_spent", "ty": "number", "t": ["WP"], "note": "credits deducted — and EXTINGUISHED for permanent acquisition"}, {"fn": "redemption_type", "ty": "enum", "t": ["WP"], "note": "AccessMode: permanent_acquisition | shared_use_lock | service_use"}, {"fn": "redemption_time", "ty": "string", "t": ["WP"], "note": "when the acquisition happened"}, {"fn": "expires_at", "ty": "string|null", "t": ["WP"], "note": "null for permanent acquisition; set for shared_use_lock / timed access"}, {"fn": "access_valuation_snapshot", "ty": "object", "t": ["WP"], "note": "the AccessValuation embedded for audit"}], "json": "{\n  \"redemption_id\": \"stillwater:RDM-031\",\n  \"participant_id\": \"stillwater:sam\",\n  \"item_id\": \"stillwater:ITEM-toolkit-rev2\",\n  \"itc_spent\": 9.20,\n  \"redemption_type\": \"permanent_acquisition\",   // <-- credits EXTINGUISHED, not transferred\n  \"redemption_time\": \"2026-06-20T11:00:00Z\"\n}\n// ↻ matching ledger entry:\n{ \"entry_type\": \"access_redeemed\", \"amount\": -9.20, \"balance_after\": 5.70 }\n// ↻ ITCAccount: total_redeemed 0 → 9.20, balance 14.90 → 5.70"}, {"type": "NodeEquivalenceProfile", "tier": "proposed", "fields": [{"fn": "profile_id", "ty": "string", "t": ["WP"], "note": "id for this node's equivalence profile"}, {"fn": "home_node_id", "ty": "string", "t": ["FED"], "note": "the node whose credits are being interpreted"}, {"fn": "host_node_id", "ty": "string", "t": ["FED"], "note": "the node where access is being computed"}, {"fn": "equivalence_bands", "ty": "array", "t": ["WP", "DEFERRED"], "note": "interpretation ranges by skill/eco context — NOT a balance edit"}, {"fn": "adjusts_balance", "ty": "const false", "t": ["WP"], "note": "always false — harmonizes meaning, never the ledger"}], "json": "{\n  \"profile_id\": \"stillwater:EQV-from-rivermouth\",\n  \"home_node_id\": \"rivermouth\",\n  \"host_node_id\": \"stillwater\",\n  \"equivalence_bands\": [\n    { \"skill\": \"skilled.welding\", \"interpretation_factor\": 1.05 }   // scarcer here → reads slightly higher\n  ],\n  \"adjusts_balance\": false   // <-- the ledger is NEVER rewritten; only local reads adapt\n}"}, {"type": "EthicsEvent", "tier": "proposed", "fields": [{"fn": "event_id", "ty": "string", "t": ["WP"], "note": "id for this ethics flag"}, {"fn": "severity", "ty": "enum", "t": ["WP"], "note": "shared Severity (e.g. warning) — reconciled, see OQ-07"}, {"fn": "description", "ty": "string", "t": ["WP"], "note": "what was observed, in plain terms"}, {"fn": "involved_member_ids", "ty": "array", "t": ["FED"], "note": "node-id:person-id list — who's involved (empty here)"}, {"fn": "involved_coop_ids", "ty": "array", "t": ["WP"], "note": "the co-op(s) where it surfaced (the repair co-op)"}, {"fn": "rule_violations", "ty": "array", "t": ["WP"], "note": "e.g. queue_bias, proto_market_exchange, coercion_pattern, decay_evasion, role_monopoly"}, {"fn": "status", "ty": "enum", "t": ["WP"], "note": "EthicsStatus: open | under_review | resolved"}, {"fn": "resolution_notes", "ty": "string|null", "t": ["WP"], "note": "filled by CDS when resolved — null while open"}], "json": "{\n  \"event_id\": \"stillwater:ETH-007\",\n  \"node_id\": \"stillwater\",\n  \"timestamp\": \"2026-06-21T09:30:00Z\",\n  \"severity\": \"warning\",\n  \"description\": \"Higher-balance members given faster access to the scarce diagnostic bench.\",\n  \"involved_member_ids\": [],            // a queue pattern, not a named individual\n  \"involved_coop_ids\": [\"stillwater:repair-coop\"],\n  \"rule_violations\": [\"queue_bias\"],\n  \"status\": \"open\",\n  \"resolution_notes\": null              // filled by CDS once resolved\n}\n// → escalates via FRS to CDS; NO balance is touched here. Ledger: { \"entry_type\": \"ethics_flag_created\", \"amount\": 0 }"}], "oad": [{"type": "CertifiedDesign", "tier": "ratified", "fields": [{"fn": "design_id", "ty": "string", "t": ["WP"], "note": "unique id, generated at first submission"}, {"fn": "version", "ty": "string", "t": ["WP"], "note": "semantic version string, e.g. \"0.1.0\" — every revision is a new version"}, {"fn": "title", "ty": "string", "t": ["WP"], "note": "what's being designed"}, {"fn": "authored_by", "ty": "array", "t": ["WP", "FED"], "note": "list of node-id:participant-id — who drafted it"}, {"fn": "cds_mandate_ref", "ty": "string|null", "t": ["DG"], "note": "the CDS DecisionRecord that authorized this design work"}, {"fn": "status", "ty": "enum", "t": ["WP"], "note": "DesignStatus — starts \"draft\"; this field matures every module →"}, {"fn": "bill_of_materials", "ty": "array", "t": ["WP"], "note": "list of MaterialRequirement (the materials this design needs)"}, {"fn": "node_id", "ty": "string", "t": ["FED"], "note": "originating node — here, Stillwater"}, {"fn": "governance_scope", "ty": "enum", "t": ["DG"], "note": "coop | node | network — the level this design is certified at"}, {"fn": "federation_hash", "ty": "string|null", "t": ["FED", "DEFERRED"], "note": "reserved (null) until designs cross nodes"}], "json": "{\n  \"design_id\": \"stillwater:DES-001\",\n  \"version\": \"0.1.0\",\n  \"title\": \"Raised & reinforced footbridge — vertical farm crossing\",\n  \"authored_by\": [\"stillwater:maya\"],\n  \"cds_mandate_ref\": \"stillwater:DR-001\",\n  \"status\": \"draft\",\n  \"bill_of_materials\": [\n    {\"material_id\": \"MAT-01\", \"material_name\": \"Douglas-fir glulam beam\", \"quantity\": 6, \"unit\": \"ea\"},\n    {\"material_id\": \"MAT-02\", \"material_name\": \"galvanized steel bracket\", \"quantity\": 24, \"unit\": \"ea\"},\n    \"... ×3 more line items\"\n  ],\n  \"node_id\": \"stillwater\",\n  \"governance_scope\": \"node\",\n  \"federation_hash\": null\n}"}, {"type": "MaterialRequirement", "tier": "proposed", "fields": [{"fn": "material_id", "ty": "string", "t": ["DG"], "note": "id for this line item"}, {"fn": "material_name", "ty": "string", "t": ["WP"], "note": "e.g. \"Douglas-fir glulam beam\""}, {"fn": "quantity", "ty": "number", "t": ["WP"], "note": "how much is needed"}, {"fn": "unit", "ty": "string", "t": ["DG"], "note": "e.g. \"kg\", \"ea\", \"m\""}, {"fn": "eco_coefficients", "ty": "object|null", "t": ["WP", "DEFERRED"], "note": "reserved — embodied energy, carbon, toxicity… filled by M3 later"}], "json": ""}, {"type": "DesignEvent", "tier": "proposed", "fields": [{"fn": "event_id", "ty": "string", "t": ["DG"], "note": "id for this single change event"}, {"fn": "design_id", "ty": "string", "t": ["WP"], "note": "the design it belongs to"}, {"fn": "version", "ty": "string", "t": ["WP"], "note": "which version this event produced"}, {"fn": "node_id", "ty": "string", "t": ["FED"], "note": "originating node — lets FRS pull events per node"}, {"fn": "event_type", "ty": "enum", "t": ["DG"], "note": "submitted | version_updated | status_changed | certified | revoked | superseded"}, {"fn": "author_id", "ty": "string", "t": ["FED"], "note": "node-id:participant-id — who made the change"}, {"fn": "detail", "ty": "object", "t": ["DG"], "note": "the specifics of the change"}], "json": "{\n  \"event_id\": \"stillwater:DES-001:EVT-003\",\n  \"design_id\": \"stillwater:DES-001\",\n  \"version\": \"0.2.0\",\n  \"event_type\": \"version_updated\",\n  \"author_id\": \"stillwater:maya\",\n  \"detail\": {\"changed\": \"bill_of_materials\", \"reason\": \"swap imported brackets for local recycled steel (Tomas)\"}\n}\n// ↻ CertifiedDesign.status: \"draft\" → \"under_review\";  design_lineage → \"stillwater:DES-001@0.1.0\""}, {"type": "EcologicalAssessment", "tier": "proposed", "fields": [{"fn": "design_id", "ty": "string", "t": ["WP"], "note": "the design assessed"}, {"fn": "version", "ty": "string", "t": ["WP"], "note": "the version assessed"}, {"fn": "ecological_flag", "ty": "enum", "t": ["WP"], "note": "low | medium | high — the coarse Phase-2 signal"}, {"fn": "embodied_energy", "ty": "number|null", "t": ["WP", "DEFERRED"], "note": "reserved — total embodied energy (MJ)"}, {"fn": "carbon_intensity", "ty": "number|null", "t": ["WP", "DEFERRED"], "note": "reserved — kg CO₂e"}, {"fn": "recyclability", "ty": "number|null", "t": ["WP", "DEFERRED"], "note": "reserved — 0–1 recyclability index"}, {"fn": "water_use", "ty": "number|null", "t": ["WP", "DEFERRED"], "note": "reserved — water footprint (L)"}], "json": "// On the CertifiedDesign:\n\"ecological_flag\": \"low\",\n\"ecological_notes\": \"Recycled steel + local glulam; no in-stream works; salmon habitat undisturbed.\",\n\"ecological_detail\": null,                     // [DEFERRED] structured coefficients filled later\n\n// EcologicalAssessment (the structured companion FRS can recalibrate):\n{\"design_id\":\"stillwater:DES-001\",\"version\":\"0.2.0\",\"ecological_flag\":\"low\",\n \"embodied_energy\": null, \"carbon_intensity\": null}   // [DEFERRED] numbers come later"}, {"type": "LaborStep", "tier": "proposed", "fields": [{"fn": "name", "ty": "string", "t": ["WP"], "note": "e.g. \"set glulam beams\""}, {"fn": "estimated_hours", "ty": "number", "t": ["WP"], "note": "time estimate for this step"}, {"fn": "skill_tier", "ty": "enum", "t": ["WP"], "note": "low | medium | high | expert — shared SkillTier enum"}, {"fn": "tools_required", "ty": "array", "t": ["WP"], "note": "list of tools/equipment needed"}, {"fn": "sequence_index", "ty": "integer", "t": ["WP"], "note": "ordering of this step in the build"}, {"fn": "safety_notes", "ty": "string", "t": ["WP"], "note": "hazards and precautions"}, {"fn": "ergonomics_flags", "ty": "array", "t": ["WP", "DEFERRED"], "note": "reserved — repetitive_motion, awkward_posture, …"}], "json": "// CertifiedDesign.production_steps (one of 7 LaborSteps shown):\n{\"name\":\"set glulam beams\",\"sequence_index\":2,\"estimated_hours\":16,\n \"skill_tier\":\"high\",\"tools_required\":[\"crane\",\"levels\"],\n \"safety_notes\":\"creek-edge work; harness + spotter required\"}\n\n// CertifiedDesign.skill_requirements (hours rolled up by tier):\n\"skill_requirements\": {\"low\": 8, \"medium\": 22, \"high\": 24, \"expert\": 4}"}, {"type": "CertificationChangeEvent", "tier": "proposed", "fields": [{"fn": "event_id", "ty": "string", "t": ["DG"], "note": "id for this certification change"}, {"fn": "design_id", "ty": "string", "t": ["WP"], "note": "the design certified"}, {"fn": "version", "ty": "string", "t": ["WP"], "note": "the version certified (1.0.0)"}, {"fn": "node_id", "ty": "string", "t": ["FED"], "note": "originating node — lets FRS route the change"}, {"fn": "old_status", "ty": "enum", "t": ["DG"], "note": "prior DesignStatus — here \"optimized\""}, {"fn": "new_status", "ty": "enum", "t": ["DG"], "note": "new DesignStatus — here \"certified\""}, {"fn": "reason", "ty": "string", "t": ["DG"], "note": "why it changed"}, {"fn": "superseded_by_version", "ty": "string|null", "t": ["DG"], "note": "reserved (null) — set if this change supersedes an earlier certified version"}, {"fn": "triggering_frs_finding_ref", "ty": "string|null", "t": ["DG", "DEFERRED"], "note": "reserved — the FRS finding that prompted a future revoke, if any"}], "json": ""}], "cos": [{"type": "ProductionPlan", "tier": "proposed", "fields": [{"fn": "plan_id", "ty": "string", "t": ["WP"], "note": "unique id for this production run"}, {"fn": "node_id", "ty": "string", "t": ["FED"], "note": "which node — here, Stillwater"}, {"fn": "governance_scope", "ty": "enum", "t": ["DG"], "note": "coop | node | network — the level that authorised this plan"}, {"fn": "design_ref", "ty": "string", "t": ["WP"], "note": "OAD certified design + version — REQUIRED, must be certified"}, {"fn": "cds_mandate_ref", "ty": "string", "t": ["DG"], "note": "the CDS DispatchPacket/DecisionRecord authorising production"}, {"fn": "batch_size", "ty": "integer", "t": ["WP"], "note": "how many units — here, 1 bridge retrofit"}, {"fn": "task_definition_ids", "ty": "array", "t": ["WP"], "note": "links to the TaskDefinition templates"}, {"fn": "expected_labor_hours_by_skill", "ty": "object", "t": ["WP"], "note": "projected hours per skill tier → an early signal to ITC"}, {"fn": "status", "ty": "enum", "t": ["DG"], "note": "ProductionPlanStatus (spec: planning | active | complete | cancelled) — we narrate it as 8 stages so you can watch it advance every module →"}], "json": "{\n  \"plan_id\": \"stillwater:PP-001\",\n  \"node_id\": \"stillwater\",\n  \"governance_scope\": \"node\",\n  \"design_ref\": \"stillwater:BRIDGE-RETRO@v1.0\",\n  \"cds_mandate_ref\": \"stillwater:DSP-001\",\n  \"batch_id\": \"stillwater:BATCH-001\",\n  \"batch_size\": 1,\n  \"task_definition_ids\": [\"stillwater:TD-01\", \"... ×6\"],\n  \"expected_labor_hours_by_skill\": {\"expert\": 28, \"high\": 46, \"medium\": 40, \"low\": 18},\n  \"expected_materials\": {\"steel_section_kg\": 320, \"timber_decking_kg\": 180},\n  \"expected_cycle_time_hours\": 96,\n  \"status\": \"planning\"          // spec enum: planning|active|complete|cancelled (narrated below as 8 stages)\n}"}, {"type": "TaskDefinition", "tier": "proposed", "fields": [{"fn": "task_definition_id", "ty": "string", "t": ["WP"], "note": "id for this work template"}, {"fn": "design_ref", "ty": "string", "t": ["WP"], "note": "the certified design this step derives from"}, {"fn": "name", "ty": "string", "t": ["WP"], "note": "e.g. \"steel_frame_welding\""}, {"fn": "skill_tier", "ty": "enum", "t": ["WP"], "note": "SkillTier (shared with ITC): low|medium|high|expert"}, {"fn": "estimated_hours_per_unit", "ty": "number", "t": ["WP"], "note": "the planning estimate (compared to reality later)"}, {"fn": "required_tools", "ty": "array", "t": ["WP"], "note": "tools/jigs the task needs (e.g. mig_welder)"}, {"fn": "required_materials", "ty": "object", "t": ["WP"], "note": "material_id → quantity needed"}, {"fn": "predecessors", "ty": "array", "t": ["WP"], "note": "task ids that must finish first (the build order)"}, {"fn": "required_clearances", "ty": "array", "t": ["WP"], "note": "safety clearances (e.g. hot-work, working-at-height)"}], "json": "{\n  \"task_definition_id\": \"stillwater:TD-04\",\n  \"design_ref\": \"stillwater:BRIDGE-RETRO@v1.0\",\n  \"name\": \"steel_frame_welding\",\n  \"skill_tier\": \"expert\",\n  \"estimated_hours_per_unit\": 28,\n  \"required_tools\": [\"mig_welder\", \"frame_jig\"],\n  \"required_materials\": {\"steel_section_kg\": 320, \"welding_gas_m3\": 4},\n  \"predecessors\": [\"stillwater:TD-02\"],\n  \"required_clearances\": [\"hot_work\", \"structural_signoff\"]\n}"}, {"type": "TaskInstance", "tier": "proposed", "fields": [{"fn": "task_instance_id", "ty": "string", "t": ["WP"], "note": "id for this scheduled/executed task"}, {"fn": "definition_id", "ty": "string", "t": ["WP"], "note": "which TaskDefinition template it realises"}, {"fn": "plan_id", "ty": "string", "t": ["DG"], "note": "back-ref to the ProductionPlan"}, {"fn": "assigned_coop_id", "ty": "string", "t": ["WP"], "note": "the co-op / crew that took it on"}, {"fn": "status", "ty": "enum", "t": ["WP"], "note": "TaskStatus: pending | in_progress | blocked | done | cancelled"}, {"fn": "actual_hours", "ty": "number", "t": ["WP"], "note": "the real hours — compared against the estimate"}, {"fn": "participants", "ty": "array", "t": ["WP"], "note": "node-id:participant-id of who actually worked it"}], "json": "{\n  \"task_instance_id\": \"stillwater:TI-04\",\n  \"definition_id\": \"stillwater:TD-04\",\n  \"plan_id\": \"stillwater:PP-001\",\n  \"batch_id\": \"stillwater:BATCH-001\",\n  \"assigned_coop_id\": \"stillwater:fabrication-crew\",\n  \"status\": \"done\",\n  \"actual_hours\": 31,\n  \"participants\": [\"stillwater:maya\", \"stillwater:priya\"],\n  \"notes\": \"Estimate was 28h; ran 31h (one weld re-done).\"\n}"}, {"type": "LaborEvent", "tier": "ratified", "fields": [{"fn": "event_id", "ty": "string", "t": ["DG"], "note": "unique id for this labor record"}, {"fn": "timestamp", "ty": "string", "t": ["DG"], "note": "when the work was logged (ISO date-time)"}, {"fn": "participant_id", "ty": "string", "t": ["FED"], "note": "node-id:person-id — who did the work"}, {"fn": "task_ref", "ty": "string", "t": ["DG"], "note": "the TaskInstance this labor was for"}, {"fn": "hours", "ty": "number", "t": ["DG"], "note": "raw, value-neutral hours (>0) — NOT yet weighted"}, {"fn": "skill_tier", "ty": "enum", "t": ["DG"], "note": "SkillTier — the input ITC uses to weight"}, {"fn": "context", "ty": "object", "t": ["DG"], "note": "weighting signals — the primary input to ITC Module 2 (never omit)"}, {"fn": "verification_status", "ty": "enum", "t": ["DG"], "note": "pending | verified | disputed — keeps the ledger honest"}, {"fn": "itc_weighted_hours", "ty": "number|null", "t": ["DG", "DEFERRED"], "note": "null at COS — ITC fills this in later"}], "json": "{\n  \"event_id\": \"stillwater:LE-007\",\n  \"timestamp\": \"2026-06-04T15:02:00Z\",\n  \"participant_id\": \"stillwater:maya\",\n  \"coop_id\": \"stillwater:fabrication-crew\",\n  \"governance_scope\": \"node\",\n  \"task_ref\": \"stillwater:TI-04\",\n  \"production_plan_ref\": \"stillwater:PP-001\",\n  \"design_ref\": \"stillwater:BRIDGE-RETRO@v1.0\",\n  \"node_id\": \"stillwater\",\n  \"hours\": 31,\n  \"skill_tier\": \"expert\",\n  \"context\": {\"hot_work\": true, \"structural\": true},\n  \"verification_status\": \"verified\",\n  \"itc_weighted_hours\": null\n}"}, {"type": "MaterialConsumptionEvent", "tier": "ratified", "fields": [{"fn": "event_id", "ty": "string", "t": ["DG"], "note": "unique id for this consumption record"}, {"fn": "timestamp", "ty": "string", "t": ["DG"], "note": "when the material was drawn"}, {"fn": "task_ref", "ty": "string|null", "t": ["DG"], "note": "the TaskInstance that used it"}, {"fn": "design_ref", "ty": "string|null", "t": ["DG"], "note": "the certified design (for traceability)"}, {"fn": "material_id", "ty": "string", "t": ["DG"], "note": "which material"}, {"fn": "quantity_consumed", "ty": "number", "t": ["DG"], "note": "how much was used"}, {"fn": "unit", "ty": "string", "t": ["DG"], "note": "kg, m³, … the measurement unit"}, {"fn": "quantity_remaining", "ty": "number|null", "t": ["DG"], "note": "inventory level after this draw"}, {"fn": "ecological_flag", "ty": "enum", "t": ["DG"], "note": "EcologicalFlag — carried from the OAD design → FRS reads this"}, {"fn": "source", "ty": "enum", "t": ["DG"], "note": "internal | external_dependency — keep external sourcing transparent"}], "json": "{\n  \"event_id\": \"stillwater:MCE-002\",\n  \"timestamp\": \"2026-06-04T11:20:00Z\",\n  \"task_ref\": \"stillwater:TI-04\",\n  \"production_plan_ref\": \"stillwater:PP-001\",\n  \"design_ref\": \"stillwater:BRIDGE-RETRO@v1.0\",\n  \"node_id\": \"stillwater\",\n  \"governance_scope\": \"node\",\n  \"material_id\": \"steel_section\",\n  \"material_name\": \"Recycled structural steel section\",\n  \"quantity_consumed\": 320,\n  \"unit\": \"kg\",\n  \"quantity_remaining\": 140,\n  \"ecological_flag\": \"low\",\n  \"source\": \"internal\"\n}"}, {"type": "COSEvent", "tier": "proposed", "fields": [{"fn": "event_id", "ty": "string", "t": ["WP"], "note": "unique id for this ledger entry"}, {"fn": "node_id", "ty": "string", "t": ["FED"], "note": "which node"}, {"fn": "timestamp", "ty": "string", "t": ["WP"], "note": "when it happened"}, {"fn": "event_type", "ty": "enum", "t": ["WP"], "note": "COSEventType: labor | material | workflow | qa | distribution | coordination"}, {"fn": "design_ref", "ty": "string", "t": ["WP"], "note": "the design this event relates to"}, {"fn": "payload", "ty": "object", "t": ["WP"], "note": "event-type-specific detail (e.g. the task state change)"}, {"fn": "prev_hash", "ty": "string|null", "t": ["WP", "DEFERRED"], "note": "chains entries into a tamper-evident ledger"}, {"fn": "event_hash", "ty": "string|null", "t": ["WP", "DEFERRED"], "note": "this entry's hash"}], "json": "{\n  \"event_id\": \"stillwater:CE-011\",\n  \"node_id\": \"stillwater\",\n  \"timestamp\": \"2026-06-04T15:02:00Z\",\n  \"event_type\": \"workflow\",\n  \"coop_unit_id\": \"stillwater:fabrication-crew\",\n  \"design_ref\": \"stillwater:BRIDGE-RETRO@v1.0\",\n  \"payload\": {\"task_ref\": \"stillwater:TI-04\", \"transition\": \"in_progress→done\", \"actual_hours\": 31},\n  \"prev_hash\": \"sha256:9af1c2...\",\n  \"event_hash\": \"sha256:b7e034...\"\n}"}, {"type": "COSDistributionRecord", "tier": "proposed", "fields": [{"fn": "distribution_id", "ty": "string", "t": ["WP"], "note": "id for this distribution event"}, {"fn": "node_id", "ty": "string", "t": ["FED"], "note": "which node"}, {"fn": "design_ref", "ty": "string", "t": ["WP"], "note": "the design / unit being distributed"}, {"fn": "unit_serial", "ty": "string", "t": ["WP"], "note": "the specific finished unit"}, {"fn": "access_mode", "ty": "enum", "t": ["WP"], "note": "AccessMode (shared with ITC): permanent_acquisition | shared_use_lock | service_use"}, {"fn": "assigned_center_id", "ty": "string|null", "t": ["WP"], "note": "access center / fleet — null for fixed infrastructure"}, {"fn": "access_valuation_ref", "ty": "string|null", "t": ["WP"], "note": "link to the ITC AccessValuation used (if any)"}], "json": "{\n  \"distribution_id\": \"stillwater:DIST-001\",\n  \"node_id\": \"stillwater\",\n  \"design_ref\": \"stillwater:BRIDGE-RETRO@v1.0\",\n  \"unit_serial\": \"stillwater:BRIDGE-RETRO-0001\",\n  \"timestamp\": \"2026-06-05T09:00:00Z\",\n  \"access_mode\": \"shared_use_lock\",\n  \"assigned_center_id\": null,\n  \"access_valuation_ref\": null,\n  \"notes\": \"Fixed community infrastructure — shared use, no credit extinguishment.\"\n}"}, {"type": "QAEvent", "tier": "proposed", "fields": [{"fn": "qa_event_id", "ty": "string", "t": ["WP"], "note": "id for this QA result"}, {"fn": "design_ref", "ty": "string", "t": ["WP"], "note": "the design being verified"}, {"fn": "test_type", "ty": "enum", "t": ["WP"], "note": "QATestType: functional | safety | durability | maintainability | eco_compliance"}, {"fn": "passed", "ty": "boolean", "t": ["WP"], "note": "the headline result"}, {"fn": "metrics", "ty": "object", "t": ["WP"], "note": "measured values (e.g. load held, repair_time_hours)"}, {"fn": "failure_rate", "ty": "number", "t": ["WP"], "note": "batch-level unit failure rate"}, {"fn": "severity_index", "ty": "number", "t": ["DG"], "note": "feeds FRS severity mapping for any failure"}], "json": "{\n  \"qa_event_id\": \"stillwater:QA-002\",\n  \"node_id\": \"stillwater\",\n  \"design_ref\": \"stillwater:BRIDGE-RETRO@v1.0\",\n  \"batch_id\": \"stillwater:BATCH-001\",\n  \"timestamp\": \"2026-06-05T08:10:00Z\",\n  \"test_type\": \"safety\",\n  \"passed\": true,\n  \"metrics\": {\"design_load_kN\": 50, \"tested_load_kN\": 75, \"deflection_mm\": 6},\n  \"failure_rate\": 0.0,\n  \"severity_index\": 0,\n  \"notes\": \"One weld failed inspection and was re-done before this pass.\"\n}"}, {"type": "ProductionSummary", "tier": "proposed", "fields": [{"fn": "plan_id", "ty": "string", "t": ["WP"], "note": "the production run summarised"}, {"fn": "total_weighted_hours_by_tier", "ty": "object", "t": ["WP"], "note": "for ITC valuation (after weighting)"}, {"fn": "total_raw_hours_by_tier", "ty": "object", "t": ["WP"], "note": "the raw labor reality COS captured"}, {"fn": "material_consumption", "ty": "object", "t": ["WP"], "note": "totals per material, with ecological flags"}, {"fn": "units_completed", "ty": "integer", "t": ["WP"], "note": "how many units finished"}, {"fn": "units_failed_qa", "ty": "integer", "t": ["WP"], "note": "how many failed QA (feeds reliability)"}], "json": "{\n  \"plan_id\": \"stillwater:PP-001\",\n  \"node_id\": \"stillwater\",\n  \"design_ref\": \"stillwater:BRIDGE-RETRO@v1.0\",\n  \"total_raw_hours_by_tier\": {\"expert\": 31, \"high\": 44, \"medium\": 43, \"low\": 16},\n  \"material_consumption\": {\"steel_section_kg\": 320, \"timber_decking_kg\": 180, \"welding_gas_m3\": 4},\n  \"units_completed\": 1,\n  \"units_failed_qa\": 0\n}\n// → consumed by ITC (valuation). A parallel OperationalSignalData trace → FRS.\n// ↻ ProductionPlan.status: \"qa_checked\" → \"recorded\"  (same object, mutated across the pipeline)"}], "frs": [{"type": "SignalEnvelope", "tier": "proposed", "fields": [{"fn": "envelope_id", "ty": "string", "t": ["WP"], "note": "unique id for this one atomic signal"}, {"fn": "source", "ty": "enum", "t": ["WP"], "note": "COS | OAD | ITC | CDS | ECO | FED — who emitted it"}, {"fn": "domain", "ty": "enum", "t": ["WP"], "note": "ecology | throughput | labor | … (12 SignalDomain values)"}, {"fn": "governance_scope", "ty": "enum", "t": ["DG"], "note": "coop | node | network — which level this pertains to"}, {"fn": "metrics", "ty": "array", "t": ["WP"], "note": "the numbers: {name, value, unit, quality}"}, {"fn": "upstream_ref_ids", "ty": "object", "t": ["WP"], "note": "links back to the COS/ITC record it came from (traceability)"}, {"fn": "entry_hash", "ty": "string|null", "t": ["WP", "DEFERRED"], "note": "reserved — tamper-evident chain"}], "json": "SignalEnvelope (one of 6): {\n  \"envelope_id\": \"stillwater:ENV-014\",\n  \"source\": \"COS\",\n  \"domain\": \"throughput\",\n  \"governance_scope\": \"node\",\n  \"metrics\": [{\"name\": \"flood_closures\", \"value\": 3, \"unit\": \"events\", \"quality\": \"verified\"}],\n  \"upstream_ref_ids\": {\"cos_plan_id\": \"stillwater:COS-PLN-221\"},\n  \"entry_hash\": null\n}"}, {"type": "FRSSignalPacket", "tier": "ratified", "fields": [{"fn": "packet_id", "ty": "string", "t": ["DG"], "note": "unique id for this review-window bundle"}, {"fn": "node_id", "ty": "string", "t": ["FED"], "note": "which node — here, Stillwater; federation-aware from day one"}, {"fn": "period_start", "ty": "date-time", "t": ["DG"], "note": "start of the window this packet summarizes"}, {"fn": "period_end", "ty": "date-time", "t": ["DG"], "note": "end of the window"}, {"fn": "generated_by", "ty": "string", "t": ["DG"], "note": "the FRS agent that built this packet"}, {"fn": "status", "ty": "enum", "t": ["DG"], "note": "starts at \"ingested\" — THIS is the field that advances every module →"}, {"fn": "envelopes", "ty": "array", "t": ["WP"], "note": "the raw SignalEnvelope bundle (restored from WP)"}, {"fn": "labor_summary", "ty": "object", "t": ["DG"], "note": "human-readable COS labor rollup for CDS"}, {"fn": "materials_summary", "ty": "object", "t": ["DG"], "note": "COS materials rollup"}, {"fn": "cds_summary", "ty": "object", "t": ["DG"], "note": "governance rollup from CDS — closes the GOVERNANCE loop, telling FRS whether past responses worked"}, {"fn": "findings", "ty": "array", "t": ["WP"], "note": "DiagnosticFinding list — empty now, filled at M2"}, {"fn": "recommendations", "ty": "array", "t": ["WP"], "note": "Recommendation list — empty now, filled at M4"}, {"fn": "cds_submission_ref", "ty": "string|null", "t": ["DG"], "note": "ref to the CDS Issue this becomes — null until the loop closes"}], "json": "{\n  \"packet_id\": \"stillwater:FRS-PKT-007\",\n  \"node_id\": \"stillwater\",\n  \"period_start\": \"2026-05-01T00:00:00Z\",\n  \"period_end\": \"2026-05-30T00:00:00Z\",\n  \"generated_by\": \"frs-node-agent\",\n  \"status\": \"ingested\",\n  \"envelopes\": [\"stillwater:ENV-014\", \"... ×6\"],\n  \"labor_summary\": {\"total_events\": 6, \"overrun_tasks\": [\"bridge-repair\"]},\n  \"cds_summary\": {\"open_governance_issues\": 0},   // ← will report back next window\n  \"findings\": [],\n  \"recommendations\": [],\n  \"cds_submission_ref\": null\n}"}, {"type": "DiagnosticFinding", "tier": "ratified", "fields": [{"fn": "finding_id", "ty": "string", "t": ["WP"], "note": "unique id for this finding"}, {"fn": "packet_ref", "ty": "string", "t": ["WP"], "note": "the FRSSignalPacket it was found in"}, {"fn": "finding_type", "ty": "enum", "t": ["WP"], "note": "throughput_bottleneck_persistent (11 canonical FindingType values)"}, {"fn": "severity", "ty": "enum", "t": ["WP"], "note": "info | low | moderate | high | critical — here: high"}, {"fn": "scope", "ty": "enum", "t": ["WP"], "note": "local | node | regional | federation — the blast radius; drives routing"}, {"fn": "persistence", "ty": "enum", "t": ["WP"], "note": "transient | emerging | persistent | structural — here: persistent"}, {"fn": "confidence", "ty": "enum", "t": ["WP"], "note": "low | medium | high — how sure FRS is"}, {"fn": "summary", "ty": "string", "t": ["WP"], "note": "one-sentence plain-language statement of the problem"}, {"fn": "indicators", "ty": "object", "t": ["WP"], "note": "the metrics that triggered it (numbers, for audit)"}, {"fn": "target_system", "ty": "enum", "t": ["WP"], "note": "CDS | OAD | COS | ITC | FED — who should hear about it"}, {"fn": "requires_cds", "ty": "bool", "t": ["WP"], "note": "does this need community deliberation? here: true"}], "json": "{\n  \"finding_id\": \"stillwater:FND-031\",\n  \"packet_ref\": \"stillwater:FRS-PKT-007\",\n  \"finding_type\": \"throughput_bottleneck_persistent\",\n  \"severity\": \"high\",\n  \"scope\": \"node\",\n  \"persistence\": \"persistent\",\n  \"confidence\": \"high\",\n  \"summary\": \"The farm footbridge is closing repeatedly in storms, stranding produce and the crew.\",\n  \"indicators\": {\"flood_closures\": 3.0, \"stranded_deliveries\": 5.0, \"repair_hours_overrun\": 0.34},\n  \"target_system\": \"CDS\",\n  \"requires_cds\": true\n}"}, {"type": "ConstraintModel", "tier": "proposed", "fields": [{"fn": "model_id", "ty": "string", "t": ["WP", "DEFERRED"], "note": "id for this model"}, {"fn": "constraints", "ty": "array", "t": ["WP", "DEFERRED"], "note": "binding limits {name, threshold, current_value, margin}"}, {"fn": "assumptions", "ty": "array", "t": ["WP", "DEFERRED"], "note": "what the scenarios assume"}, {"fn": "scenario_results", "ty": "array", "t": ["WP", "DEFERRED"], "note": "projected futures {horizon, risk_score, breaches}"}, {"fn": "related_findings", "ty": "array", "t": ["WP", "DEFERRED"], "note": "the finding(s) this model informs"}], "json": "// DEFERRED — shape only, not populated in the minimal build\n{\n  \"model_id\": \"stillwater:CM-009\",\n  \"constraints\": [{\"name\": \"farm_access_uptime\", \"threshold\": 0.9,\n                   \"current_value\": 0.78, \"margin\": -0.12}],\n  \"scenario_results\": [\n    {\"scenario_id\": \"status_quo\", \"horizon\": \"mid\", \"risk_score\": 0.71,\n     \"constraint_breaches\": [\"farm_access_uptime\"]},\n    {\"scenario_id\": \"raise_bridge\", \"horizon\": \"mid\", \"risk_score\": 0.18}\n  ],\n  \"related_findings\": [\"stillwater:FND-031\"]\n}"}, {"type": "Recommendation", "tier": "ratified", "fields": [{"fn": "recommendation_id", "ty": "string", "t": ["WP"], "note": "unique id"}, {"fn": "finding_ref", "ty": "string", "t": ["WP"], "note": "the DiagnosticFinding it comes from"}, {"fn": "constraint_model_ref", "ty": "string|null", "t": ["WP", "DEFERRED"], "note": "points at the M3 model — null until modeling ships"}, {"fn": "target_system", "ty": "enum", "t": ["WP"], "note": "CDS | OAD | COS | ITC | FED — who this is for"}, {"fn": "recommendation_type", "ty": "enum", "t": ["WP"], "note": "policy_review_prompt | design_review_request | … (10 values)"}, {"fn": "severity", "ty": "enum", "t": ["WP"], "note": "inherited from the finding"}, {"fn": "scope", "ty": "enum", "t": ["WP"], "note": "inherited from the finding"}, {"fn": "confidence", "ty": "enum", "t": ["WP"], "note": "inherited from the finding"}, {"fn": "summary", "ty": "string", "t": ["WP"], "note": "the suggested action, in plain language"}, {"fn": "payload", "ty": "object", "t": ["WP"], "note": "structured detail for the target system to use"}, {"fn": "status", "ty": "enum", "t": ["WP"], "note": "pending | acknowledged | accepted | rejected | superseded — FRS sets pending ONLY"}, {"fn": "response_ref", "ty": "string|null", "t": ["WP"], "note": "null — the receiving system links its action here, not FRS"}], "json": "Recommendation → CDS (the loop-closer):\n{\n  \"recommendation_id\": \"stillwater:REC-052\",\n  \"finding_ref\": \"stillwater:FND-031\",\n  \"constraint_model_ref\": null,\n  \"target_system\": \"CDS\",\n  \"recommendation_type\": \"policy_review_prompt\",\n  \"severity\": \"high\", \"scope\": \"node\", \"confidence\": \"high\",\n  \"summary\": \"Open a deliberation: the footbridge crossing is failing repeatedly in storms.\",\n  \"status\": \"pending\",          // ← FRS can ONLY set this. It cannot write \"accepted\".\n  \"response_ref\": null          // ← stays null until CDS acts through its own process\n}\n\nRecommendation → OAD: {\"recommendation_type\": \"design_review_request\",\n  \"summary\": \"Bridge design may no longer suit current storm load.\", \"status\": \"pending\"}"}, {"type": "SensemakingArtifact", "tier": "proposed", "fields": [{"fn": "artifact_id", "ty": "string", "t": ["WP", "DEFERRED"], "note": "id for this artifact"}, {"fn": "artifact_type", "ty": "enum", "t": ["WP", "DEFERRED"], "note": "risk_brief | scenario_comparison | deliberation_prompt | dashboard_view …"}, {"fn": "finding_refs", "ty": "array", "t": ["WP", "DEFERRED"], "note": "the finding(s) it explains"}, {"fn": "narrative", "ty": "string", "t": ["WP", "DEFERRED"], "note": "the plain-language explanation for participants"}, {"fn": "prompts", "ty": "array", "t": ["WP", "DEFERRED"], "note": "deliberation questions for the community"}], "json": "// DEFERRED — shape only\n{\n  \"artifact_id\": \"stillwater:ART-018\",\n  \"artifact_type\": \"deliberation_prompt\",\n  \"finding_refs\": [\"stillwater:FND-031\"],\n  \"narrative\": \"Storm closures of the farm crossing have tripled this season; the farm is cut off ~22% of the time and rising.\",\n  \"prompts\": [\"Repair in place, redesign, or reroute access?\", \"What labor-hours can we commit this window?\"]\n}"}, {"type": "MemoryRecord", "tier": "proposed", "fields": [{"fn": "memory_id", "ty": "string", "t": ["WP", "DEFERRED"], "note": "id for this memory entry"}, {"fn": "record_type", "ty": "enum", "t": ["WP", "DEFERRED"], "note": "baseline | incident | intervention | outcome | lesson …"}, {"fn": "finding_refs", "ty": "array", "t": ["WP", "DEFERRED"], "note": "the episode this remembers"}, {"fn": "summary", "ty": "string", "t": ["WP", "DEFERRED"], "note": "what happened &amp; what was learned"}, {"fn": "recorded_at", "ty": "date-time", "t": ["WP", "DEFERRED"], "note": "when it entered memory"}], "json": "// DEFERRED — shape only\n{\n  \"memory_id\": \"stillwater:MEM-044\",\n  \"record_type\": \"incident\",\n  \"finding_refs\": [\"stillwater:FND-031\"],\n  \"summary\": \"Persistent storm closures of the farm crossing. Parallel: Rivermouth node, 2019 — raised composite span halved closures; +180 labor-hours, no creek disturbance.\",\n  \"recorded_at\": \"2026-05-30T00:00:00Z\"\n}"}, {"type": "FederatedInsight", "tier": "proposed", "fields": [{"fn": "insight_id", "ty": "string", "t": ["WP", "FED", "DEFERRED"], "note": "id for the shared insight"}, {"fn": "message_type", "ty": "enum", "t": ["WP", "FED", "DEFERRED"], "note": "early_warning | best_practice | stress_signature …"}, {"fn": "origin_node_id", "ty": "string", "t": ["FED", "DEFERRED"], "note": "who is sharing — here, Stillwater"}, {"fn": "pattern", "ty": "object", "t": ["WP", "FED", "DEFERRED"], "note": "the de-identified signature, not raw records"}, {"fn": "finding_refs", "ty": "array", "t": ["WP", "FED", "DEFERRED"], "note": "the local finding it generalizes"}], "json": "// DEFERRED + FED — shape only\n{\n  \"insight_id\": \"fed:INS-2207\",\n  \"message_type\": \"early_warning\",\n  \"origin_node_id\": \"stillwater\",\n  \"pattern\": {\"signature\": \"storm_closure_rise_on_single_access_crossing\",\n              \"lead_indicators\": [\"flood_closures\", \"stranded_deliveries\"]},\n  \"finding_refs\": [\"stillwater:FND-031\"]\n}"}]};
+const SPEC={"cds": "https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/01-cds.md", "oad": "https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/02-oad.md", "itc": "https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/03-itc.md", "cos": "https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/04-cos.md", "frs": "https://github.com/tairea/integral-phase-1/blob/main/integral-schema-exercise/specs/05-frs.md"};
+
+(function(){
+  function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function tagPill(t){return '<span class="tg tg-'+t.toLowerCase()+'">'+t+'</span>';}
+  function tierBadge(tier){
+    return tier==='ratified'
+      ? '<span class="tier rat">✓ JSON Schema written &amp; validated</span>'
+      : '<span class="tier prop">shape proposed — no schema yet</span>';
+  }
+  function fieldsView(rec){
+    var h='<div class="fields">';
+    rec.fields.forEach(function(f){
+      h+='<div class="frow"><div class="fl"><span class="fn">'+esc(f.fn)+'</span><span class="ftype">'+esc(f.ty)+'</span></div>'
+       +'<div class="fr"><span class="fnote">'+f.note+'</span> '+(f.t||[]).map(tagPill).join('')+'</div></div>';
+    });
+    return h+'</div>';
+  }
+  function jsonView(rec){
+    if(!rec.json) return '<div class="nojson">No example object yet — this shape is spec-only.</div>';
+    return '<pre>'+esc(rec.json)+'</pre>';
+  }
+  function render(mount){
+    var mod=mount.getAttribute('data-mod'); var recs=SD[mod]; if(!recs) return;
+    var st={i:0, view:'plain'};
+    var tabs='<div class="sc-tabs"><div class="sc-tablist">'+recs.map(function(r,i){
+      return '<button class="sc-tab'+(i===0?' on':'')+'" data-i="'+i+'"><span class="dot '+(r.tier==='ratified'?'d-rat':'d-prop')+'"></span>'+r.type+'</button>';
+    }).join('')+'<span class="sc-hint">← click a contract to see its schema</span></div><button class="sc-chev" aria-label="Expand or collapse" title="Expand / collapse">▾</button></div>';
+    mount.innerHTML='<div class="schema-card collapsed">'+tabs
+      +'<div class="sc-collapse"><div class="sc-head"><div class="sc-name"></div>'
+      +'<div class="sc-toggle"><button data-v="plain" class="on">Plain-language</button><button data-v="json">Object (JSON)</button></div></div>'
+      +'<div class="sc-body"></div>'
+      +'<details class="sc-legend"><summary>What do the tags mean?</summary><div class="leg">'
+      +'<span>'+tagPill('WP')+' from the White Paper</span><span>'+tagPill('DG')+' Dev Guide addition</span>'
+      +'<span>'+tagPill('DEFERRED')+' reserved, populated later</span><span>'+tagPill('FED')+' federation field (empty until nodes connect)</span>'
+      +'</div></details>'
+      +'<div class="sc-foot">Full contract list &amp; field-by-field spec: <a href="'+SPEC[mod]+'" target="_blank" rel="noopener">'+SPEC[mod].split('/').pop()+' ↗</a></div>'
+      +'</div></div>';
+    var card=mount.querySelector('.schema-card');
+    var nameEl=mount.querySelector('.sc-name');
+    var bodyEl=mount.querySelector('.sc-body');
+    function draw(){
+      var r=recs[st.i];
+      nameEl.innerHTML='<span class="rn">'+r.type+'</span>'+tierBadge(r.tier);
+      bodyEl.innerHTML = st.view==='plain' ? fieldsView(r) : jsonView(r);
+    }
+    mount.querySelectorAll('.sc-tab').forEach(function(b){
+      b.addEventListener('click',function(){
+        var idx=+b.getAttribute('data-i');
+        if(idx===st.i && !card.classList.contains('collapsed')){ card.classList.add('collapsed'); return; }
+        st.i=idx; card.classList.remove('collapsed');
+        mount.querySelectorAll('.sc-tab').forEach(function(x){x.classList.remove('on')});
+        b.classList.add('on'); draw();
+      });
+    });
+    mount.querySelector('.sc-chev').addEventListener('click',function(){ card.classList.toggle('collapsed'); });
+    mount.querySelectorAll('.sc-toggle button').forEach(function(b){
+      b.addEventListener('click',function(){
+        st.view=b.getAttribute('data-v');
+        mount.querySelectorAll('.sc-toggle button').forEach(function(x){x.classList.remove('on')});
+        b.classList.add('on'); draw();
+      });
+    });
+    draw();
+  }
+  document.querySelectorAll('.schema-mount').forEach(render);
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Integral × ValueFlows — Should we use a shared ledger?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,900&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a0e0c; --ink-2:#101510; --panel:#141b17; --panel-2:#1a231e;
+    --cream:#f3eee1; --muted:#9aa39b; --faint:#5f6b62;
+    --amber:#f2b134; --amber-2:#ffd277; --cyan:#5cd6c6; --red:#ff6f6f;
+    --green:#84d6a0; --green-2:#a9e6bf;
+    --line:rgba(243,238,225,0.10); --line-2:rgba(243,238,225,0.06); --r:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--ink);color:var(--cream);font-family:'Archivo',sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden;position:relative}
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:linear-gradient(rgba(92,214,198,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(92,214,198,0.035) 1px,transparent 1px);
+    background-size:46px 46px;mask-image:radial-gradient(ellipse 120% 80% at 50% 0%,#000 30%,transparent 90%)}
+  body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:0 28px}
+  .narrow{max-width:760px}
+  .mono{font-family:'JetBrains Mono',monospace}
+
+  .progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:60;background:linear-gradient(90deg,var(--amber),var(--green));transition:width .1s linear}
+
+  /* HERO */
+  header{padding:96px 0 50px;position:relative}
+  .glow{position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:680px;height:420px;background:radial-gradient(circle,rgba(242,177,52,0.16),transparent 62%);filter:blur(20px);z-index:-1}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.32em;text-transform:uppercase;color:var(--amber);display:flex;align-items:center;gap:14px;margin-bottom:26px;opacity:0;animation:rise .8s .05s forwards}
+  .eyebrow::before{content:"";width:34px;height:1px;background:var(--amber)}
+  h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(2.5rem,6.2vw,4.7rem);line-height:1.0;letter-spacing:-0.02em;opacity:0;animation:rise .8s .12s forwards}
+  h1 .it{font-style:italic;font-weight:400;color:var(--amber-2)}
+  .sub{font-size:clamp(1.08rem,1.6vw,1.32rem);color:var(--muted);max-width:680px;margin-top:24px;opacity:0;animation:rise .8s .22s forwards}
+  .sub b{color:var(--cream);font-weight:600}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:32px;opacity:0;animation:rise .8s .3s forwards}
+  .chip{font-family:'JetBrains Mono',monospace;font-size:12px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:rgba(255,255,255,0.015)}
+  .chip b{color:var(--cream)}
+  .chip.green{border-color:rgba(132,214,160,0.4);color:var(--green-2)}
+
+  /* SECTIONS */
+  section{padding:58px 0;border-top:1px solid var(--line-2)}
+  .sec-tag{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.2em;color:var(--faint);text-transform:uppercase;margin-bottom:14px}
+  h2{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.7rem,3.4vw,2.5rem);letter-spacing:-0.015em;margin-bottom:14px;line-height:1.1}
+  h2 .accent{color:var(--amber)} h2 .vf{color:var(--green)}
+  .lead{color:var(--muted);font-size:1.08rem;max-width:730px}
+  .lead b{color:var(--cream);font-weight:600}
+
+  /* PROSE */
+  .prose p{font-size:1.1rem;color:#d7d3c6;margin-bottom:20px;max-width:730px}
+  .prose p b{color:var(--cream)}
+  .prose code,.fr code,.deliver code,.oq-body code{font-family:'JetBrains Mono',monospace;font-size:.85em;background:#0a0c0a;border:1px solid var(--line-2);padding:1px 6px;border-radius:5px;color:var(--green-2)}
+  .pull{border-left:3px solid var(--amber);padding:8px 0 8px 24px;margin:30px 0;font-family:'Fraunces',serif;font-style:italic;font-size:1.4rem;line-height:1.42;color:var(--amber-2);max-width:730px}
+  .pull cite{display:block;font-family:'JetBrains Mono',monospace;font-style:normal;font-size:.8rem;letter-spacing:.08em;color:var(--faint);margin-top:14px;text-transform:uppercase}
+
+  /* DG/WP/VF SOURCE EXPANSION */
+  /* INLINE SOURCE EXPANSION — matches PHASE-1-PLAN.html exactly (single amber style for every source;
+     provenance is carried by the .cite text + inline tg-* tags, never by box colour) */
+  details.dg{margin-top:12px;border:1px solid var(--line-2);border-left:3px solid rgba(242,177,52,.45);border-radius:0 8px 8px 0;background:rgba(242,177,52,0.03);overflow:hidden}
+  details.dg summary{list-style:none;cursor:pointer;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.04em;color:var(--amber-2);display:flex;align-items:center;gap:8px}
+  details.dg summary::-webkit-details-marker{display:none}
+  details.dg summary .plus{margin-left:auto;transition:transform .3s}
+  details.dg[open] summary .plus{transform:rotate(45deg)}
+  details.dg blockquote{padding:4px 18px 16px 18px;font-family:'Archivo',sans-serif;font-size:.97rem;line-height:1.68;color:#d7d3c6;font-style:normal}
+  details.dg blockquote p{margin-bottom:12px}
+  details.dg blockquote p:last-child{margin-bottom:0}
+  details.dg blockquote b{color:var(--cream);font-weight:600}
+  details.dg .cite{padding:0 18px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+  details.dg .cite a{color:var(--amber);text-decoration:none;border-bottom:1px solid rgba(242,177,52,.3)}
+
+  /* provenance tags */
+  .tg{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:4px;margin-left:4px;vertical-align:middle;white-space:nowrap}
+  .tg-wp{background:rgba(92,214,198,0.12);color:#7fd9cb}
+  .tg-dg{background:rgba(242,177,52,0.13);color:var(--amber-2)}
+  .tg-vf{background:rgba(132,214,160,0.14);color:var(--green-2)}
+  .tg-deferred{background:rgba(255,111,111,0.12);color:#ff9b9b}
+
+  /* CONSEQUENCE / VERDICT CARDS */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:28px}
+  .ccard{border:1px solid var(--line);border-radius:var(--r);padding:24px;background:linear-gradient(160deg,var(--panel),var(--ink-2))}
+  .ccard h3{font-family:'Archivo';font-weight:700;font-size:1.02rem;margin-bottom:10px;display:flex;align-items:center;gap:9px}
+  .ccard.good h3{color:var(--green)} .ccard.bad h3{color:var(--red)}
+  .ccard p{color:var(--muted);font-size:.95rem}
+  .ic{width:22px;height:22px;flex-shrink:0}
+
+  /* DIAGRAM */
+  .diagram{margin-top:6px;background:linear-gradient(160deg,var(--panel),var(--ink-2));border:1px solid var(--line);border-radius:18px;padding:28px 22px;overflow:hidden}
+  .diagram svg{display:block;width:100%;height:auto;margin:0 auto}
+  /* let diagrams in narrow prose sections breathe wider than the 760px column, without horizontal scroll */
+  .narrow .diagram.wide{width:min(94vw,1000px);margin-left:calc(50% - min(94vw,1000px)/2)}
+  .legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:16px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted)}
+  .legend span{display:flex;align-items:center;gap:8px}
+  .dot{width:11px;height:11px;border-radius:3px;display:inline-block}
+  figcaption{margin-top:14px;font-size:.9rem;color:var(--muted);max-width:720px}
+  figcaption b{color:var(--cream)}
+
+  /* MAPPING CARDS (ws style) */
+  .ws{position:relative;background:linear-gradient(165deg,var(--panel),var(--ink-2));border:1px solid var(--line);border-radius:var(--r);padding:26px 28px 24px 30px;margin-bottom:18px;transition:border-color .35s}
+  .ws::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px;background:var(--amber)}
+  .ws.cos::before{background:var(--green)} .ws.itc::before{background:var(--red)}
+  .ws-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+  .ws-id{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.78rem;letter-spacing:.08em;color:var(--amber)}
+  .ws.cos .ws-id{color:var(--green)} .ws.itc .ws-id{color:var(--red)}
+  .maps-to{font-family:'JetBrains Mono',monospace;font-size:10.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .ws h3{font-family:'Fraunces',serif;font-weight:600;font-size:1.42rem;letter-spacing:-0.01em;margin:6px 0 10px}
+  .ws .deliver{color:#d7d3c6;font-size:1rem;margin-bottom:10px;max-width:680px}
+  .ws .deliver b{color:var(--cream);font-weight:600}
+  .ws .deliver:last-of-type{margin-bottom:4px}
+
+  /* INSIGHT BANNER */
+  .insight{margin:8px 0 6px;background:linear-gradient(160deg,#13211a,#0c1410);border:1px solid rgba(132,214,160,.28);border-radius:16px;padding:30px 32px;position:relative;overflow:hidden}
+  .insight::after{content:"★";position:absolute;right:-6px;top:-30px;font-size:150px;color:rgba(132,214,160,.05);font-family:'Fraunces',serif}
+  .insight .lbl{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);font-weight:700;margin-bottom:12px}
+  .insight .big{font-family:'Fraunces',serif;font-size:clamp(1.3rem,2.6vw,1.7rem);line-height:1.34;font-weight:400;color:var(--cream)}
+  .insight .big .yes{color:var(--green-2);font-style:italic}
+  .insight .big .no{color:var(--red);font-style:italic}
+
+  /* QA / SEE FOR YOURSELF */
+  .qa{border:1px solid rgba(92,214,198,0.25);border-radius:var(--r);padding:26px 28px;background:linear-gradient(160deg,rgba(92,214,198,0.05),var(--ink-2));margin-bottom:26px}
+  .qa .q{font-family:'Fraunces',serif;font-size:1.3rem;color:var(--cyan);margin-bottom:10px;font-weight:500}
+  .qa p{color:#d7d3c6;font-size:1.02rem;margin-bottom:12px}
+  .qa p:last-child{margin-bottom:0}
+  .qa b{color:var(--cream)}
+  .links-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:8px}
+  .link-card{display:flex;flex-direction:column;gap:6px;text-decoration:none;border:1px solid var(--line);border-radius:12px;padding:18px 20px;background:linear-gradient(160deg,var(--panel),var(--ink-2));transition:border-color .3s,transform .3s}
+  .link-card:hover{border-color:rgba(132,214,160,0.5);transform:translateY(-3px)}
+  .link-card .lc-top{display:flex;align-items:center;gap:10px}
+  .link-card .lc-ic{font-size:1.1rem}
+  .link-card .lc-title{font-weight:700;color:var(--cream);font-size:1rem}
+  .link-card .lc-arr{margin-left:auto;color:var(--green)}
+  .link-card .lc-desc{color:var(--muted);font-size:.88rem}
+
+  /* SOURCE CTA */
+  .source-cta{display:inline-flex;align-items:center;gap:12px;margin-top:6px;padding:14px 20px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(160deg,var(--panel),var(--ink-2));text-decoration:none;color:var(--cream);font-weight:600;transition:border-color .3s,transform .3s}
+  .source-cta:hover{border-color:rgba(242,177,52,0.5);transform:translateY(-2px)}
+  .source-cta .gh{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--amber);letter-spacing:.06em}
+  .source-cta .arr{color:var(--amber);font-size:1.1rem}
+  .source-cta small{display:block;font-weight:400;color:var(--muted);font-size:.82rem}
+
+  /* TENSIONS */
+  .focus-label{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+  details.oq{border:1px solid var(--line-2);border-radius:10px;margin-bottom:8px;background:rgba(255,255,255,0.018);overflow:hidden;transition:border-color .3s}
+  details.oq[open]{border-color:var(--line);background:rgba(255,255,255,0.03)}
+  details.oq summary{list-style:none;cursor:pointer;padding:13px 16px;display:flex;align-items:center;gap:12px;font-weight:600;font-size:.96rem}
+  details.oq summary::-webkit-details-marker{display:none}
+  details.oq summary .code{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.03em;padding:3px 8px;border-radius:6px;background:rgba(242,177,52,0.12);color:var(--amber-2);border:1px solid rgba(242,177,52,0.25);flex-shrink:0}
+  details.oq summary .code.q{background:rgba(132,214,160,0.1);color:var(--green-2);border-color:rgba(132,214,160,0.3)}
+  details.oq summary .qt{flex:1;color:var(--cream)}
+  details.oq summary .plus{color:var(--faint);font-family:'JetBrains Mono';font-size:1.1rem;transition:transform .3s}
+  details.oq[open] summary .plus{transform:rotate(45deg);color:var(--amber)}
+  .oq-body{padding:2px 16px 16px 16px;border-top:1px dashed var(--line-2);margin-top:2px}
+  .oq-body .row{margin-top:14px}
+  .oq-body .k{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+  .oq-body .k.plain{color:var(--cyan)} .oq-body .k.why{color:var(--amber)} .oq-body .k.dir{color:var(--green-2)} .oq-body .k.src{color:var(--faint)}
+  .oq-body .v{color:#d7d3c6;font-size:.96rem}
+  .oq-body .v b{color:var(--cream)}
+  .oq-body .v .prop{color:var(--cream);font-weight:700}
+  .oq-body .v .weigh{color:var(--amber-2);font-weight:700}
+  .oq-body .v .alt{color:var(--muted)}
+  .oq-body a.srcl{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--amber);text-decoration:none;border-bottom:1px solid rgba(242,177,52,0.3)}
+  .oq-body .src-text{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--muted)}
+
+  /* LEDGER VERDICT */
+  .ledger{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:10px}
+  .ledger .lr{display:grid;grid-template-columns:128px 1fr;border-top:1px solid var(--line-2)}
+  .ledger .lr:first-child{border-top:none}
+  .ledger .lk{background:rgba(255,255,255,0.02);padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+  .ledger .lk.buy{color:var(--green)} .ledger .lk.cost{color:var(--red)}
+  .ledger .lv{padding:15px 20px;font-size:1rem;color:#d7d3c6}
+  .ledger .lv b{color:var(--cream)}
+  .ledger .sign{font-family:'JetBrains Mono',monospace;font-weight:700;margin-right:6px}
+  .ledger .sign.p{color:var(--green)} .ledger .sign.m{color:var(--red)}
+
+  footer{padding:50px 0 80px;border-top:1px solid var(--line-2);color:var(--faint);font-size:.86rem}
+  footer .note{font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.95}
+  footer b{color:var(--muted)} footer a{color:var(--amber);text-decoration:none;border-bottom:1px solid rgba(242,177,52,0.3)}
+  footer .sig{font-family:'Fraunces',serif;font-style:italic;font-size:1.15rem;color:var(--muted);margin-bottom:24px;max-width:720px;line-height:1.5}
+
+  @keyframes rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}
+  .reveal.in{opacity:1;transform:none}
+  @media(max-width:780px){.two,.links-grid{grid-template-columns:1fr}header{padding:64px 0 36px}.ledger .lr{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+<div class="glow"></div>
+
+<!-- HERO -->
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Integral × ValueFlows · A proposal for the working groups</div>
+    <h1>Keep our own books,<br>or use a <span class="it">shared ledger?</span></h1>
+    <p class="sub">A contributor has sketched how Integral's data could map onto <b>ValueFlows</b> — a twenty-year-old, widely-used vocabulary for cooperative and commons economies. This page explains, in plain terms, what that mapping gets right, where it stops, and what we'd have to decide before adopting it. Every claim is tied back to the <b>white paper</b> and <b>Dev Guide</b> — and to the ValueFlows spec itself.</p>
+    <div class="meta-row">
+      <span class="chip">A <b>plain-language</b> walkthrough</span>
+      <span class="chip"><b>3 of 5</b> systems covered</span>
+      <span class="chip"><b>3</b> tensions to weigh</span>
+      <span class="chip green">5 questions for the group</span>
+    </div>
+  </div>
+</header>
+
+<!-- WHY -->
+<section>
+  <div class="wrap narrow">
+    <div class="sec-tag">// What's being proposed, and why it's worth a look</div>
+    <h2>Every economy is, underneath, a set of <span class="accent">books</span></h2>
+    <div class="prose">
+      <p>Who did what work. What was made. What materials were used. Who can access what, and at what cost. Strip away the words and an economy is a careful, permanent record of those flows. Integral is no different — its five systems exist to keep exactly those books honestly.</p>
+      <p>So far we've been designing our own bookkeeping from scratch. <b>ValueFlows (VF)</b> offers another path: a shared, open vocabulary for describing economic flows that a whole family of cooperative and commons projects already speaks. It's built on a well-worn accounting theory called <b>REA</b> — <i>Resources, Events, Agents</i> — and it's deliberately neutral: it can describe a worker co-op or a corner shop equally well.</p>
+      <p>The question this proposal puts to the group is simple: <b>do we write our own books, or adopt the shared language — carefully?</b> Helpfully, we already have ValueFlows expertise in the room. <b>Lynn Foster</b>, who maintains ValueFlows, and <b>Leanne</b>, who builds ValueFlows accounting models, are both on the ITC workstream.</p>
+      <div class="pull">"Integral replaces speculative price signals with real biophysical metrics, transparent design information, and cybernetic feedback… informed by energy cost, material availability, labor capacity, ecological impact, and actual need — not by the willingness or ability to pay."<cite>Technical White Paper · §4.5 True Economic Calculation</cite></div>
+      <p>That sentence is the test ValueFlows has to pass. VF is happy to record prices. Integral is built to do without them. Keep that tension in mind — it's the thread running through everything below.</p>
+      <details class="dg vf">
+        <summary>📖 What ValueFlows actually is, in its own words <span class="plus">+</span></summary>
+        <blockquote>
+          <p>"The ValueFlows core is based on the <b>REA (Resource, Event, Agent)</b> ontology. To that we have added an IPO (Input-Process-Output) pattern. Agents perform Economic Events that provide Inputs to Processes and take Outputs from Processes and move Economic Resources from one Process to another."</p>
+          <p>VF organises everything across three layers: a <b>Knowledge</b> level (classifications, recipes, rules), a <b>Plan</b> level (offers, requests, schedules, promises), and an <b>Observation</b> level (what really happened).</p>
+        </blockquote>
+        <div class="cite">ValueFlows specification · <a href="https://www.valueflo.ws/specification/model-text/" target="_blank" rel="noopener">model-text ↗</a></div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- HEADLINE FINDING -->
+<section>
+  <div class="wrap">
+    <div class="sec-tag">// The headline finding</div>
+    <h2>It fits <span class="accent">three</span> of our five systems — and can't touch the other two</h2>
+    <p class="lead" style="margin-bottom:8px">ValueFlows describes <b>flows of resources</b>. That makes it a near-perfect fit for the three systems whose job is to move materials, labour, and credits around — and structurally unable to express the two systems that <i>decide</i> and <i>self-correct</i>. That isn't a flaw. It's a clean boundary, and a useful one to name.</p>
+    <div class="diagram reveal">
+      <svg viewBox="0 0 900 360" role="img" aria-label="The five Integral systems in a loop; OAD, COS and ITC map to ValueFlows; CDS and FRS do not.">
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5f6b62"/></marker>
+          <style>
+            .ttl{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700}
+            .rl{font-family:'Archivo',sans-serif;font-size:11px}
+          </style>
+        </defs>
+        <path d="M150 95 L450 55 L750 95" fill="none" stroke="#2a322c" stroke-width="2"/>
+        <path d="M750 95 C 820 160, 820 200, 750 265" fill="none" stroke="#2a322c" stroke-width="2"/>
+        <path d="M750 265 L450 305 L150 265" fill="none" stroke="#2a322c" stroke-width="2"/>
+        <path d="M150 265 C 80 200, 80 160, 150 95" fill="none" stroke="#2a322c" stroke-width="2" marker-end="url(#ah)"/>
+        <!-- CDS dim -->
+        <g opacity="0.45">
+          <circle cx="150" cy="95" r="58" fill="#141b17" stroke="#ff6f6f" stroke-width="1.6" stroke-dasharray="5 5"/>
+          <text x="150" y="90" text-anchor="middle" class="ttl" fill="#9aa39b">CDS</text>
+          <text x="150" y="110" text-anchor="middle" class="rl" fill="#5f6b62">decide</text>
+        </g>
+        <!-- OAD -->
+        <circle cx="450" cy="55" r="58" fill="#141b17" stroke="#f2b134" stroke-width="2.2"/>
+        <text x="450" y="50" text-anchor="middle" class="ttl" fill="#f2b134">OAD</text>
+        <text x="450" y="70" text-anchor="middle" class="rl" fill="#9aa39b">design</text>
+        <!-- COS -->
+        <circle cx="750" cy="180" r="58" fill="#141b17" stroke="#84d6a0" stroke-width="2.2"/>
+        <text x="750" y="175" text-anchor="middle" class="ttl" fill="#84d6a0">COS</text>
+        <text x="750" y="195" text-anchor="middle" class="rl" fill="#9aa39b">produce</text>
+        <!-- ITC -->
+        <circle cx="450" cy="305" r="58" fill="#141b17" stroke="#ffd277" stroke-width="2.2"/>
+        <text x="450" y="300" text-anchor="middle" class="ttl" fill="#ffd277">ITC</text>
+        <text x="450" y="320" text-anchor="middle" class="rl" fill="#9aa39b">account</text>
+        <!-- FRS dim -->
+        <g opacity="0.45">
+          <circle cx="150" cy="265" r="58" fill="#141b17" stroke="#ff6f6f" stroke-width="1.6" stroke-dasharray="5 5"/>
+          <text x="150" y="260" text-anchor="middle" class="ttl" fill="#9aa39b">FRS</text>
+          <text x="150" y="280" text-anchor="middle" class="rl" fill="#5f6b62">correct</text>
+        </g>
+        <g font-family="JetBrains Mono,monospace" font-size="11.5">
+          <rect x="356" y="166" width="13" height="13" rx="3" fill="#141b17" stroke="#84d6a0" stroke-width="1.6"/>
+          <text x="378" y="177" fill="#9aa39b">maps to ValueFlows</text>
+          <rect x="356" y="188" width="13" height="13" rx="3" fill="#141b17" stroke="#ff6f6f" stroke-dasharray="3 3"/>
+          <text x="378" y="199" fill="#9aa39b">no VF analog — Integral-native</text>
+        </g>
+      </svg>
+      <div class="legend">
+        <span><i class="dot" style="background:#f2b134"></i> OAD · designs</span>
+        <span><i class="dot" style="background:#84d6a0"></i> COS · production</span>
+        <span><i class="dot" style="background:#ffd277"></i> ITC · credits</span>
+        <span><i class="dot" style="background:#ff6f6f"></i> CDS &amp; FRS — outside VF's reach</span>
+      </div>
+      <figcaption>The <b>decide → design → produce → account → correct</b> loop. ValueFlows is the bookkeeping language for the middle three. The first and last — governance and feedback — Integral keeps in its own hand.</figcaption>
+    </div>
+  </div>
+</section>
+
+<!-- WHY THE FIT IS REAL -->
+<section>
+  <div class="wrap narrow">
+    <div class="sec-tag">// Why the fit is genuine, not forced</div>
+    <h2>Our pipeline already <span class="accent">runs down</span> VF's three layers</h2>
+    <div class="prose">
+      <p>This is the part that makes the mapping more than a coincidence. ValueFlows stacks everything in three layers, and Integral's value loop walks straight down them:</p>
+    </div>
+    <div class="diagram wide reveal" style="margin:18px 0 8px">
+      <svg viewBox="0 0 900 300" role="img" aria-label="ValueFlows three layers aligned to Integral systems">
+        <defs><marker id="ah2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5f6b62"/></marker></defs>
+        <g font-family="JetBrains Mono,monospace">
+          <rect x="20" y="20" width="860" height="78" rx="8" fill="rgba(242,177,52,.07)" stroke="rgba(242,177,52,.45)"/>
+          <text x="40" y="50" font-size="13" font-weight="700" fill="#ffd277" letter-spacing="2">VF · KNOWLEDGE LEVEL</text>
+          <text x="40" y="72" font-family="Archivo,sans-serif" font-size="13" fill="#9aa39b">classifications · recipes · rules · patterns</text>
+          <rect x="585" y="34" width="277" height="50" rx="7" fill="#141b17" stroke="#f2b134" stroke-width="1.6"/>
+          <text x="723" y="56" text-anchor="middle" font-family="Fraunces,serif" font-size="15" fill="#f2b134" font-weight="600">OAD — certified design commons</text>
+          <text x="723" y="74" text-anchor="middle" font-family="Archivo,sans-serif" font-size="11" fill="#9aa39b">+ resource / process taxonomies</text>
+
+          <rect x="20" y="110" width="860" height="78" rx="8" fill="rgba(92,214,198,.06)" stroke="rgba(92,214,198,.4)"/>
+          <text x="40" y="140" font-size="13" font-weight="700" fill="#5cd6c6" letter-spacing="2">VF · PLAN LEVEL</text>
+          <text x="40" y="162" font-family="Archivo,sans-serif" font-size="13" fill="#9aa39b">offers · requests · schedules · promises</text>
+          <rect x="520" y="124" width="342" height="50" rx="7" fill="#141b17" stroke="#5cd6c6" stroke-width="1.6"/>
+          <text x="691" y="146" text-anchor="middle" font-family="Fraunces,serif" font-size="15" fill="#8fe6d8" font-weight="600">CDS-authorised plans + COS planning</text>
+          <text x="691" y="164" text-anchor="middle" font-family="Archivo,sans-serif" font-size="11" fill="#9aa39b">Commitments · Intents · Plan-from-Recipe</text>
+
+          <rect x="20" y="200" width="860" height="78" rx="8" fill="rgba(132,214,160,.07)" stroke="rgba(132,214,160,.45)"/>
+          <text x="40" y="230" font-size="13" font-weight="700" fill="#84d6a0" letter-spacing="2">VF · OBSERVATION LEVEL</text>
+          <text x="40" y="252" font-family="Archivo,sans-serif" font-size="13" fill="#9aa39b">what really happened</text>
+          <rect x="560" y="214" width="302" height="50" rx="7" fill="#141b17" stroke="#84d6a0" stroke-width="1.6"/>
+          <text x="711" y="236" text-anchor="middle" font-family="Fraunces,serif" font-size="15" fill="#84d6a0" font-weight="600">COS execution + ITC ledger</text>
+          <text x="711" y="254" text-anchor="middle" font-family="Archivo,sans-serif" font-size="11" fill="#9aa39b">events acting on resources</text>
+        </g>
+        <line x1="300" y1="98" x2="300" y2="200" stroke="#2a322c" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#ah2)"/>
+        <text x="312" y="155" font-family="Fraunces,serif" font-style="italic" font-size="14" fill="#9aa39b">value loop</text>
+      </svg>
+      <figcaption>A <b>recipe</b> (knowledge) becomes a <b>plan</b> with quantities multiplied out, which is realised as <b>events</b> (what happened). That is exactly OAD&nbsp;→&nbsp;COS&nbsp;→&nbsp;ITC. The append-only "what happened" layer is the same idea our Dev Guide insists on.</figcaption>
+    </div>
+    <details class="dg">
+      <summary>📖 Why "what happened" must be append-only — and why VF agrees (Dev Guide) <span class="plus">+</span></summary>
+      <blockquote>
+        <p>"Every production plan, task assignment, labor event, material consumption, QA record, and distribution event is recorded in an <b>append-only ledger</b>. The ledger is the source of truth for ITC valuation and FRS monitoring… <b>No record is ever deleted or modified — only appended to with correction events that reference the original.</b>"</p>
+      </blockquote>
+      <div class="cite">Dev Guide · COS Module 9 (ledger) · <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">view on GitHub ↗</a></div>
+    </details>
+    <p class="lead" style="margin-top:12px">VF reaches the same rule from the accounting side: in VF, <i>"inventory cannot be changed without an economic event,"</i> and an event can only ever <code>correct</code> another — never erase it. Two traditions, one principle. <span class="tg tg-dg">DEV GUIDE</span> <span class="tg tg-vf">VALUEFLOWS</span></p>
+  </div>
+</section>
+
+<!-- THE THREE MAPPINGS -->
+<section>
+  <div class="wrap">
+    <div class="sec-tag">// The three mappings, in plain terms</div>
+    <h2>Where each system <span class="accent">lands</span></h2>
+    <p class="lead" style="margin-bottom:26px">Each of our three "metabolic" systems lines up with a specific ValueFlows idea. Tap any source box to read the exact white-paper or Dev-Guide passage it rests on.</p>
+
+    <!-- OAD -->
+    <div class="ws reveal">
+      <div class="ws-top"><span class="ws-id">OAD · OPEN ACCESS DESIGN</span><span class="maps-to">→ VF Recipe + ResourceSpecification</span></div>
+      <h3>A certified design becomes a reusable "recipe"</h3>
+      <p class="deliver">A <code>CertifiedDesign</code> maps to a VF <b>Recipe</b> — a template of process steps and material inputs. VF draws a line we currently blur: the <i>recipe</i> (how to make the thing) is separate from the <i>design artefact itself</i> (the CAD file), which is just another resource with version history. That split is arguably cleaner than ours, and it matches how we already think about design lineage.</p>
+      <p class="deliver">One thing VF won't do for us: enforce that production may only use a <i>certified</i> design. That gate is an Integral rule, and it has to live in our layer above VF.</p>
+      <details class="dg">
+        <summary>📖 The certification gate is non-negotiable (Dev Guide · OAD Module 9) <span class="plus">+</span></summary>
+        <blockquote>
+          <p>"Certification is the gate between design and production, and it must exist in the minimal build… A design is certified when it has passed ecological assessment, has a complete and coherent bill of materials, and has been reviewed and approved by the certification panel… <b>Uncertified designs cannot enter production. This constraint is enforced architecturally.</b>"</p>
+        </blockquote>
+        <div class="cite">Dev Guide · OAD Module 9 · <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">view on GitHub ↗</a></div>
+      </details>
+      <details class="dg vf">
+        <summary>📖 How VF thinks of recipes vs. designs <span class="plus">+</span></summary>
+        <blockquote>
+          <p>"In VF, recipes are thought of more like templates to generate repeatable plans, rather than designs. Designs might be CAD files, etc., and would show lineage just like other economic resources." Recipes handle the bill of materials and production steps; input flows handle consumables, work, and equipment use.</p>
+        </blockquote>
+        <div class="cite">ValueFlows ↔ Integral mapping · <a href="https://codeberg.org/valueflows/valueflows-mappings/src/branch/main/integral-vf.md" target="_blank" rel="noopener">integral-vf.md ↗</a></div>
+      </details>
+    </div>
+
+    <!-- COS -->
+    <div class="ws cos reveal">
+      <div class="ws-top"><span class="ws-id">COS · COOPERATIVE ORGANIZATION</span><span class="maps-to">→ VF EconomicEvent</span></div>
+      <h3>Doing the work is recording an "event"</h3>
+      <p class="deliver">Here VF is at its strongest. Our <code>LaborEvent</code> and <code>MaterialConsumptionEvent</code> collapse into a <b>single VF idea — the EconomicEvent</b> — told apart only by their <i>action</i>: labour is a <code>work</code> event, materials are a <code>consume</code> event, a tool is <code>use</code>, a design reference is <code>cite</code>. Inventory updates itself as a side-effect of events being recorded — you can't quietly change the books, you can only add an event. That is precisely our append-only principle, arrived at independently.</p>
+    </div>
+
+    <!-- ITC -->
+    <div class="ws itc reveal">
+      <div class="ws-top"><span class="ws-id">ITC · INTEGRAL TIME CREDITS</span><span class="maps-to">→ VF EconomicResource + events</span></div>
+      <h3>A credit account is just another "stock" that can rise and fall</h3>
+      <p class="deliver">A member's <code>ITCAccount</code> is modelled as an <b>EconomicResource</b> — the same way VF tracks a pile of timber. <b>Earning</b> credit is an event that raises the balance; <b>decay</b> is a scheduled event that lowers it; <b>spending</b> (extinguishment) is an event that consumes it. The catch: the actual <i>weighting</i> of a contribution — skill, difficulty, urgency — is Integral policy that sits on top. VF carries the raw hours; it does not carry our economics. (More on that in the tensions below.)</p>
+      <details class="dg wp">
+        <summary>📖 What credits actually are (White Paper · §5.4 / Transition) <span class="plus">+</span></summary>
+        <blockquote>
+          <p>"<b>Non-transferable</b> time credits prevent accumulation and eliminate the possibility of converting contribution into long-term power." Credits decay over time, "preventing hierarchical stratification," and there is an "<b>extinguishing of credits upon use</b>, preventing accumulation, trade, speculation, or conversion into power."</p>
+        </blockquote>
+        <div class="cite">Technical White Paper · §5.4 ITC &amp; §11 Transition principles</div>
+      </details>
+      <details class="dg">
+        <summary>📖 The four ITC properties that can never be deferred (Dev Guide) <span class="plus">+</span></summary>
+        <blockquote>
+          <p>"These four properties — <b>honest recording, embodied valuation, decay, and non-transferability</b> — are the ITC's foundational principles. All four must be present and architecturally enforced from day one. None of them are deferrable."</p>
+        </blockquote>
+        <div class="cite">Dev Guide · ITC Modules · <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">view on GitHub ↗</a></div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- KEY INSIGHT -->
+<section>
+  <div class="wrap narrow">
+    <div class="sec-tag">// The single best idea to take from this</div>
+    <h2>"Credits can't be transferred" stops being a flag, and becomes a <span class="vf">rule of grammar</span></h2>
+    <div class="prose">
+      <p>This is the most elegant thing the mapping surfaces. VF's vocabulary already separates two kinds of action: <b>changing a quantity in place</b> (<code>raise</code>, <code>lower</code>, <code>consume</code>) and <b>handing something to someone else</b> (<code>transfer</code>, <code>move</code>, <code>copy</code>). So our hardest ITC promise — that credits are non-transferable and vanish when used — becomes a single, checkable sentence:</p>
+    </div>
+    <div class="insight reveal">
+      <div class="lbl">Non-transferability, expressed natively</div>
+      <p class="big">A credit account may <span class="yes">only ever</span> be <b>raised</b> (earned), <b>lowered</b> (decayed), or <b>consumed</b> (spent) — and may <span class="no">never</span> be <b>transferred</b>, <b>moved</b>, or <b>copied</b> to another person.</p>
+    </div>
+    <div class="diagram wide reveal" style="margin-top:18px">
+      <svg viewBox="0 0 900 250" role="img" aria-label="The ITC account permits raise, lower, consume but forbids transfer, move, copy">
+        <defs><marker id="ahg" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#84d6a0"/></marker></defs>
+        <rect x="360" y="92" width="180" height="66" rx="12" fill="#141b17" stroke="#ffd277" stroke-width="2"/>
+        <text x="450" y="120" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="14" font-weight="700" fill="#ffd277">ITCAccount</text>
+        <text x="450" y="140" text-anchor="middle" font-family="Archivo,sans-serif" font-size="11" fill="#9aa39b">an EconomicResource</text>
+        <g font-family="JetBrains Mono,monospace" font-size="13">
+          <line x1="172" y1="80" x2="356" y2="105" stroke="#84d6a0" stroke-width="2" marker-end="url(#ahg)"/>
+          <line x1="172" y1="125" x2="356" y2="125" stroke="#84d6a0" stroke-width="2" marker-end="url(#ahg)"/>
+          <line x1="172" y1="170" x2="356" y2="145" stroke="#84d6a0" stroke-width="2" marker-end="url(#ahg)"/>
+          <rect x="40" y="67" width="132" height="26" rx="13" fill="rgba(132,214,160,.1)" stroke="#84d6a0"/><text x="106" y="84" text-anchor="middle" fill="#a9e6bf" font-weight="700">raise · earn</text>
+          <rect x="40" y="112" width="132" height="26" rx="13" fill="rgba(132,214,160,.1)" stroke="#84d6a0"/><text x="106" y="129" text-anchor="middle" fill="#a9e6bf" font-weight="700">lower · decay</text>
+          <rect x="40" y="156" width="132" height="26" rx="13" fill="rgba(132,214,160,.1)" stroke="#84d6a0"/><text x="106" y="173" text-anchor="middle" fill="#a9e6bf" font-weight="700">consume · spend</text>
+          <text x="106" y="214" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="14" fill="#84d6a0">permitted</text>
+        </g>
+        <g font-family="JetBrains Mono,monospace" font-size="13">
+          <line x1="544" y1="105" x2="728" y2="80" stroke="#ff6f6f" stroke-width="2" stroke-dasharray="6 5"/>
+          <line x1="544" y1="125" x2="728" y2="125" stroke="#ff6f6f" stroke-width="2" stroke-dasharray="6 5"/>
+          <line x1="544" y1="145" x2="728" y2="170" stroke="#ff6f6f" stroke-width="2" stroke-dasharray="6 5"/>
+          <g stroke="#ff6f6f" stroke-width="2.5"><line x1="630" y1="84" x2="642" y2="96"/><line x1="642" y1="84" x2="630" y2="96"/></g>
+          <g stroke="#ff6f6f" stroke-width="2.5"><line x1="630" y1="119" x2="642" y2="131"/><line x1="642" y1="119" x2="630" y2="131"/></g>
+          <g stroke="#ff6f6f" stroke-width="2.5"><line x1="630" y1="154" x2="642" y2="166"/><line x1="642" y1="154" x2="630" y2="166"/></g>
+          <rect x="728" y="67" width="132" height="26" rx="13" fill="rgba(255,111,111,.08)" stroke="#ff6f6f"/><text x="794" y="84" text-anchor="middle" fill="#ff9b9b" font-weight="700">transfer</text>
+          <rect x="728" y="112" width="132" height="26" rx="13" fill="rgba(255,111,111,.08)" stroke="#ff6f6f"/><text x="794" y="129" text-anchor="middle" fill="#ff9b9b" font-weight="700">move</text>
+          <rect x="728" y="156" width="132" height="26" rx="13" fill="rgba(255,111,111,.08)" stroke="#ff6f6f"/><text x="794" y="173" text-anchor="middle" fill="#ff9b9b" font-weight="700">copy</text>
+          <text x="794" y="214" text-anchor="middle" font-family="Fraunces,serif" font-style="italic" font-size="14" fill="#ff6f6f">forbidden</text>
+        </g>
+      </svg>
+      <figcaption>A rule a VF-aware system can <b>enforce and audit by construction</b> — stronger than a <code>transferable: false</code> field someone could flip. The Dev Guide is blunt that this can't be relaxed "just for the prototype."</figcaption>
+    </div>
+    <details class="dg">
+      <summary>📖 "Credits must not be transferable… even in the prototype" (Dev Guide) <span class="plus">+</span></summary>
+      <blockquote>
+        <p>"That labor contributions are recorded in a way that is transparent, non-transferable, and ecologically aware from the beginning… <b>Credits must not be transferable between participants, even in the prototype.</b>"</p>
+      </blockquote>
+      <div class="cite">Dev Guide · Non-deferrable principles · <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">view on GitHub ↗</a></div>
+    </details>
+  </div>
+</section>
+
+<!-- NOT MAPPED -->
+<section>
+  <div class="wrap narrow">
+    <div class="sec-tag">// What ValueFlows deliberately can't say</div>
+    <h2>Governance and feedback stay <span class="accent">ours</span></h2>
+    <div class="prose">
+      <p>Map it to the white paper's village: ValueFlows is the <b>communal ledger</b>, the <b>shared notebook</b>, and the <b>work teams</b>. It says nothing about the <b>open meetings</b> or the <b>household feedback visits</b> — because deciding and self-correcting aren't resource flows. This is exactly the right boundary to draw.</p>
+    </div>
+    <div class="two">
+      <div class="ccard bad reveal">
+        <h3>CDS · governance <span class="tg tg-deferred">NO VF ANALOG</span></h3>
+        <p>Weighted consensus, objection mapping, authorising action. VF's closest ideas — Proposal and Agreement — are <i>commercial offer/accept</i> primitives, not collective deliberation. And critically, CDS is what sets the rules ITC then runs on.</p>
+      </div>
+      <div class="ccard bad reveal">
+        <h3>FRS · feedback <span class="tg tg-deferred">NO VF ANALOG</span></h3>
+        <p>Diagnostics, fairness monitoring, recommendations. VF <i>describes</i> what happened; it never <i>judges</i> it. FRS reads the VF observation layer as its raw signal — but its conclusions live entirely outside VF.</p>
+      </div>
+    </div>
+    <details class="dg" style="margin-top:18px">
+      <summary>📖 Why CDS can't live in VF: it sets the policy, ITC just executes it (Dev Guide §4.2) <span class="plus">+</span></summary>
+      <blockquote>
+        <p>"<b>CDS → ITC: The Policy Signal</b> — The contract by which CDS governance decisions become the normative rules that ITC operates within. This includes labor weighting parameters, decay rules, fairness thresholds, access policy modifications, and anti-coercion boundaries. <b>ITC does not set its own policy — CDS does.</b>"</p>
+      </blockquote>
+      <div class="cite">Dev Guide §4.2 · <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#42-the-core-data-contracts-between-systems" target="_blank" rel="noopener">view on GitHub ↗</a></div>
+    </details>
+    <details class="dg">
+      <summary>📖 Why FRS can't live in VF: it recommends, it never acts (Dev Guide · FRS) <span class="plus">+</span></summary>
+      <blockquote>
+        <p>"<code>submit_certification_review_request</code> does not halt production. It submits a non-executive recommendation… <b>FRS flags the divergence. It does not pull the trigger.</b> Production continues unless and until CDS ratifies a decision to the contrary… This boundary is what prevents FRS diagnostic authority from becoming a form of algorithmic shadow governance."</p>
+      </blockquote>
+      <div class="cite">Dev Guide · FRS Module 4 · <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">view on GitHub ↗</a></div>
+    </details>
+  </div>
+</section>
+
+<!-- TENSIONS -->
+<section>
+  <div class="wrap narrow">
+    <div class="sec-tag">// Three things to weigh before we commit</div>
+    <h2>Where the fit needs <span class="accent">discipline</span></h2>
+    <p class="lead" style="margin-bottom:8px">None of these are deal-breakers. They're the places where adopting VF carelessly would quietly cost us something. The Dev Guide gives us the exact test to apply.</p>
+    <div class="pull" style="font-size:1.2rem">"If this simplification were never revisited, would the system still be <i>recognizably Integral</i>?"<cite>Integral Dev Guide · §1.2</cite></div>
+
+    <div class="focus-label" style="margin-top:24px">The three tensions</div>
+    <details class="oq" open><summary><span class="code">TENSION-01</span><span class="qt">VF is neutral about money — Integral is not</span><span class="plus">+</span></summary>
+      <div class="oq-body">
+        <div class="row"><div class="k plain">In plain terms</div><div class="v">ValueFlows can describe a market just as happily as a commons. It has a built-in <code>mediumOfExchange</code> flag and can record prices. We'd be adopting a tool that knows how to do the very thing we're built to avoid.</div></div>
+        <div class="row"><div class="k why">Why it matters</div><div class="v">The white paper is unambiguous that price-based coordination is the thing we're replacing. Letting market-shaped features sit dormant in our core is exactly the kind of "approximated-away principle" the Dev Guide warns is a <b>corruption</b>, not a simplification.</div></div>
+        <div class="row"><div class="k dir">Direction on the table</div><div class="v"><span class="prop">Proposed:</span> adopt VF as a <b>constrained profile</b> — credit resources flagged non-<code>mediumOfExchange</code>, and the forbidden-action rule from above enforced. <br><span class="weigh">Worth weighing:</span> <span class="alt">who maintains that constraint list, and how do we keep it from eroding over time?</span></div></div>
+        <div class="row"><div class="k src">Source</div><div class="v"><span class="src-text">White Paper §4.5 · §3.1 market failures</span>
+          <details class="dg wp"><summary>📖 Read the passage here <span class="plus">+</span></summary>
+            <blockquote><p>"Price signals, often described as efficient conveyors of information, reflect only the <b>willingness and ability to pay</b> — not actual social need, ecological impact, or long-term viability."</p></blockquote>
+            <div class="cite">Technical White Paper §4.5 / §3.1</div>
+          </details>
+          <details class="dg"><summary>📖 …and why approximating a principle away is a corruption (Dev Guide §1.2) <span class="plus">+</span></summary>
+            <blockquote><p>"Unacceptable incompleteness means a foundational principle has been approximated away. The non-transferability of Integral Time Credits is violated to make accounting simpler… <b>These are not simplifications — they are corruptions.</b> A system built this way is not a minimal version of Integral; it is a different system with Integral's name."</p></blockquote>
+            <div class="cite">Dev Guide §1.2 · <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">view on GitHub ↗</a></div>
+          </details>
+        </div></div>
+      </div>
+    </details>
+
+    <details class="oq"><summary><span class="code">TENSION-02</span><span class="qt">VF carries the raw hours — not how we value them</span><span class="plus">+</span></summary>
+      <div class="oq-body">
+        <div class="row"><div class="k plain">In plain terms</div><div class="v">VF records "3 hours of work" cleanly. But turning that into credited value — weighting for skill, difficulty, urgency — is <i>our</i> economics. VF gives us the substrate, not the calculation.</div></div>
+        <div class="row"><div class="k why">Why it matters</div><div class="v">The hardest, most contested part of Integral — how a contribution is weighted — stays Integral-native either way. We should be clear-eyed: VF does <b>not</b> de-risk True Economic Calculation; it just feeds it clean, value-neutral inputs. Happily, that "keep raw and weighted separate" instinct is already in our Dev Guide.</div></div>
+        <div class="row"><div class="k dir">Direction on the table</div><div class="v"><span class="prop">Proposed:</span> let VF's <code>effortQuantity</code> / <code>resourceQuantity</code> be the raw labour record; keep the weighting as an Integral layer that produces the credited value. <br><span class="weigh">Worth weighing:</span> <span class="alt">this is the same raw-vs-weighted boundary as the ITC schema workstream's open question — they should be resolved together.</span></div></div>
+        <div class="row"><div class="k src">Source</div><div class="v"><a class="srcl" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md#43-fields-that-must-exist-from-day-one-even-if-empty" target="_blank" rel="noopener">Dev Guide §4.3 ↗</a>
+          <details class="dg"><summary>📖 Read the passage here <span class="plus">+</span></summary>
+            <blockquote><p>"The white paper separates raw labor capture (<code>LaborEvent</code>) from weighted contribution recognition (<code>WeightedLaborRecord</code>). This is architecturally significant: <b>the labor event is value-neutral until weighting is applied</b>… the boundary between raw capture and weighted output must be preserved in the field structure."</p></blockquote>
+            <div class="cite">Dev Guide §4.3 — The Labor Event Record</div>
+          </details>
+        </div></div>
+      </div>
+    </details>
+
+    <details class="oq"><summary><span class="code">TENSION-03</span><span class="qt">Federation: VF can express it, but won't enforce it</span><span class="plus">+</span></summary>
+      <div class="oq-body">
+        <div class="row"><div class="k plain">In plain terms</div><div class="v">We tag every record with its node from day one. VF handles multiple communities through its Agent concept. But our rule that credits are <i>recognised, never converted</i> across nodes — the home node re-mints fresh credit rather than receiving any — is something VF can represent but won't police.</div></div>
+        <div class="row"><div class="k why">Why it matters</div><div class="v">"Recognition without conversion" is how cross-node reciprocity avoids becoming a back-door currency. If nothing enforces it, the constraint is only as good as everyone's good behaviour.</div></div>
+        <div class="row"><div class="k dir">Direction on the table</div><div class="v"><span class="prop">Proposed:</span> enforcement lives in the same Integral validation layer above VF — the no-conversion rule sits with the forbidden-action discipline, not in VF itself. <br><span class="weigh">Worth weighing:</span> <span class="alt">do we encode node identity inside VF's Agent, or keep our own <code>node_id</code> + <code>federation_hash</code> and map to VF on export?</span></div></div>
+        <div class="row"><div class="k src">Source</div><div class="v"><span class="src-text">White Paper §10 Internodal Reciprocity · Dev Guide §4 federation fields</span></div></div>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- VERDICT -->
+<section>
+  <div class="wrap narrow">
+    <div class="sec-tag">// The balance sheet</div>
+    <h2>What adoption <span class="vf">buys</span>, and what it <span class="accent">costs</span></h2>
+    <div class="ledger reveal">
+      <div class="lr"><div class="lk buy">Buys us</div><div class="lv"><span class="sign p">+</span> A mature, twenty-year accounting vocabulary — and off-the-shelf semantics for inventory, recipes, and <b>event-sourced ledgers that already match our append-only rule</b>.</div></div>
+      <div class="lr"><div class="lk buy">Buys us</div><div class="lv"><span class="sign p">+</span> <b>Interoperability</b> with the wider commons-economy world already on VF — we wouldn't reinvent resource-flow bookkeeping, and we'd speak the same language as adjacent projects.</div></div>
+      <div class="lr"><div class="lk cost">Costs us</div><div class="lv"><span class="sign m">−</span> It covers <b>three of five systems only</b>. CDS and FRS stay Integral-native and must be specified separately.</div></div>
+      <div class="lr"><div class="lk cost">Costs us</div><div class="lv"><span class="sign m">−</span> Its neutrality means we must adopt a <b>deliberately constrained profile</b> — or risk diluting the post-monetary core.</div></div>
+    </div>
+    <div class="pull" style="margin-top:30px">The recommendation: adopt ValueFlows as a <i>constrained profile</i> for OAD, COS, and ITC — and keep CDS and FRS as Integral-native layers that <i>read from</i> the VF substrate rather than live inside it. Apply the Dev Guide's test at every step: would it still be <i>recognizably Integral</i>? With the constraints in place, the answer stays yes.</div>
+  </div>
+</section>
+
+<!-- DECISIONS -->
+<section>
+  <div class="wrap narrow">
+    <div class="sec-tag">// What the group needs to decide</div>
+    <h2>Five questions for <span class="accent">deliberation</span></h2>
+    <p class="lead" style="margin-bottom:22px">This is a cross-system architectural choice — a <b>Tier-2</b> decision, settled by documented consensus, not a single call. None of these are decided. Deciding them together is the work.</p>
+
+    <details class="oq"><summary><span class="code q">Q1</span><span class="qt">Profile, not wholesale adoption?</span><span class="plus">+</span></summary>
+      <div class="oq-body"><div class="row"><div class="k dir">The question</div><div class="v">Do we adopt VF as a <b>constrained profile</b> for OAD/COS/ITC rather than wholesale — and who drafts the constraint list (forbidden actions, non-<code>mediumOfExchange</code> resources)?</div></div></div>
+    </details>
+    <details class="oq"><summary><span class="code q">Q2</span><span class="qt">Target VF directly, or map on export?</span><span class="plus">+</span></summary>
+      <div class="oq-body"><div class="row"><div class="k dir">The question</div><div class="v">Phase 1's schema exercise produces our canonical schemas. Do those <i>target</i> VF classes directly, or do we keep Integral-native schemas with a VF <b>export mapping</b>? <span class="tg tg-dg">DEV GUIDE §5.1</span></div></div></div>
+    </details>
+    <details class="oq"><summary><span class="code q">Q3</span><span class="qt">Adopt VF's recipe-vs-design split?</span><span class="plus">+</span></summary>
+      <div class="oq-body"><div class="row"><div class="k dir">The question</div><div class="v">Do we follow VF in separating the executable <code>Recipe</code> from the design artefact (a resource with lineage), restructuring <code>CertifiedDesign</code> accordingly?</div></div></div>
+    </details>
+    <details class="oq"><summary><span class="code q">Q4</span><span class="qt">How is credit issuance modelled?</span><span class="plus">+</span></summary>
+      <div class="oq-body"><div class="row"><div class="k dir">The question</div><div class="v">Confirm the issuance pattern: a reciprocal event paired to the work event — and whether an Agreement / Claim mediates it. The mapping author flags this as still open. <span class="tg tg-vf">VALUEFLOWS</span></div></div></div>
+    </details>
+    <details class="oq"><summary><span class="code q">Q5</span><span class="qt">Where does "recognition without conversion" live?</span><span class="plus">+</span></summary>
+      <div class="oq-body"><div class="row"><div class="k dir">The question</div><div class="v">Does the federation no-conversion rule live in the VF profile, or in an Integral validation layer above it? <span class="tg tg-wp">WHITE PAPER §10</span></div></div></div>
+    </details>
+  </div>
+</section>
+
+<!-- SEE FOR YOURSELF -->
+<section>
+  <div class="wrap narrow">
+    <div class="sec-tag">// See for yourself — all public</div>
+    <h2>The sources, <span class="vf">all in the open</span></h2>
+    <div class="qa reveal">
+      <div class="q">Nothing here is decided. This is a sketch, by its own author's admission.</div>
+      <p>The mapping says of itself: <i>"This is almost certainly not correct right now, but hopefully gives the basic ideas. A more exact mapping can happen later."</i> Treat it as a first probe, grounded against our two sources of truth — the <b>white paper</b> and the <b>Dev Guide</b> — and against the ValueFlows body of work.</p>
+    </div>
+    <div class="links-grid">
+      <a class="link-card reveal" href="https://codeberg.org/valueflows/valueflows-mappings/src/branch/main/integral-vf.md" target="_blank" rel="noopener">
+        <div class="lc-top"><span class="lc-ic">🔗</span><span class="lc-title">The mapping itself</span><span class="lc-arr">↗</span></div>
+        <div class="lc-desc">integral-vf.md on Codeberg — the diagrams that map our schemas (CertifiedDesign, LaborEvent, ITCAccount…) onto VF.</div>
+      </a>
+      <a class="link-card reveal" href="https://www.valueflo.ws/specification/model-text/" target="_blank" rel="noopener">
+        <div class="lc-top"><span class="lc-ic">📐</span><span class="lc-title">The ValueFlows model</span><span class="lc-arr">↗</span></div>
+        <div class="lc-desc">The full REA + IPO model: Resources, Events, Agents, Processes, Recipes, across the three layers.</div>
+      </a>
+      <a class="link-card reveal" href="https://www.valueflo.ws/" target="_blank" rel="noopener">
+        <div class="lc-top"><span class="lc-ic">🌐</span><span class="lc-title">ValueFlows, the body of work</span><span class="lc-arr">↗</span></div>
+        <div class="lc-desc">The wider project and ecosystem (hREA, Bonfire and others) that already speak this vocabulary.</div>
+      </a>
+      <a class="link-card reveal" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">
+        <div class="lc-top"><span class="lc-ic">📖</span><span class="lc-title">Our Dev Guide</span><span class="lc-arr">↗</span></div>
+        <div class="lc-desc">The source of truth for what's non-deferrable, the data contracts, and the schema exercise this feeds into.</div>
+      </a>
+    </div>
+    <div style="margin-top:22px">
+      <a class="source-cta" href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">
+        <span class="arr">↗</span>
+        <span>Open the full Dev Guide<small>Every quote on this page is anchored to it or to the white paper</small></span>
+        <span class="gh">github.com/Integral-Collective</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap narrow">
+    <p class="sig">A distillation for deliberation, not a ratified position. Engage with the tensions — the mapping author calls it a sketch, and our whole method is to earn complexity through use. <span style="color:var(--cream)">Value appears first; structure follows.</span></p>
+    <p class="note">
+      SOURCES OF TRUTH<br>
+      → Technical White Paper (v0.1, Dec 2025) — §4.5, §5.4, §10, §11<br>
+      → <a href="https://github.com/Integral-Collective/integral-devguide/blob/main/DEVGUIDE.md" target="_blank" rel="noopener">Integral Dev Guide</a> — §1.2, §4.1–§4.3, §5.1, module specs<br>
+      → ValueFlows — <a href="https://www.valueflo.ws/specification/model-text/" target="_blank" rel="noopener">model-text</a> · <a href="https://www.valueflo.ws/" target="_blank" rel="noopener">valueflo.ws</a> · <a href="https://codeberg.org/valueflows/valueflows-mappings/src/branch/main/integral-vf.md" target="_blank" rel="noopener">integral-vf.md mapping</a><br>
+      <br>
+      <b>Integral × ValueFlows · Interoperability proposal · Draft v0.1 · prepared for the working groups</b>
+    </p>
+  </div>
+</footer>
+
+<script>
+  const prog=document.getElementById('prog');
+  const onScroll=()=>{const h=document.documentElement;prog.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%'};
+  document.addEventListener('scroll',onScroll,{passive:true});onScroll();
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:0.12,rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
